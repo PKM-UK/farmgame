@@ -5,27 +5,11 @@ from random import uniform
 vec = pg.math.Vector2
 
 terrain_types = {
-    "dirt": {"name": "dirt", "obstacle": False, "tile": "dirtTile.png", "isotile": "isodirtTile.png", 'img': None, 'iso_images': None},
-    "grass": {"name": "grass", "obstacle": False, "tile": "grassTile.png", "isotile": "isograssTile.png", 'img': None, 'iso_images': None},
-    "tree": {"name": "tree", "obstacle": True, "tile": "treeTile.png", "isotile": "isotreeTile1.png", 'img': None, 'iso_images': None},
-    "wall": {"name": "wall", "obstacle": True, "tile": "wallTile.png", "isotile": "isowallTile.png", 'img': None, 'iso_images': None}
+    "dirt": {"name": "dirt", "obstacle": False, "tile": "dirtTile.png", "isotiles": ["isodirtTile.png"], 'img': None, 'iso_images': []},
+    "grass": {"name": "grass", "obstacle": False, "tile": "grassTile.png", "isotiles": ["isograssTile.png"], 'img': None, 'iso_images': []},
+    "tree": {"name": "tree", "obstacle": True, "tile": "treeTile.png", "isotiles": ["isotreeTile1.png", "isotreeTile2.png"], 'img': None, 'iso_images': []},
+    "wall": {"name": "wall", "obstacle": True, "tile": "wallTile.png", "isotiles": ["isowallTile.png"], 'img': None, 'iso_images': []}
 }
-
-"""
-terrain_types = {
-    "dirt": Terrain("dirt", False),
-    "grass": Terrain{"grass", False),
-    "tree": Terrain("tree", True),
-    "wall": Terrain("wall", True)
-}
-
-terrain_images = {
-    'dirt': ('dirttile.png', ['isodirtTile.png']),
-    'grass': ('grasstile.png', ['isograssTile.png']),
-    'tree': ('dirttile.png', ['isotreeTile1.png', 'isotreeTile2.png']),
-    'dirt': ('walltile.png', ['isowallTile.png']),
-}
-"""
 
 map_char_mapping = {
     ".": terrain_types["dirt"],
@@ -184,8 +168,12 @@ class Mob(pg.sprite.Sprite):
             pg.draw.rect(self.image, col, self.health_bar)
 
 class Wall(pg.sprite.Sprite):
-    def __init__(self, game, x, y, terrain_type):
-        self.groups = game.all_sprites, game.walls
+    def __init__(self, game, x, y, terrain_type, anim_frame=0):
+        if len(terrain_type['iso_images']) > 1:
+            self.groups = game.all_sprites, game.walls, game.animated
+        else:
+            self.groups = game.all_sprites, game.walls
+
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
 
@@ -193,10 +181,11 @@ class Wall(pg.sprite.Sprite):
         self.y = y
         self.terrain_type = terrain_type
         self.is_obstacle = self.terrain_type["obstacle"]
+        self.anim_frame = anim_frame
 
 
-        self.image = game.terrain_images[self.terrain_type["name"]]
-        self.iso_image = game.terrain_iso_images[self.terrain_type["name"]]
+        self.image = terrain_types[self.terrain_type["name"]]['img']
+        self.iso_image = terrain_types[self.terrain_type["name"]]['iso_images'][self.anim_frame]
         self.hit_rect = self.image.get_rect()
         self.hit_rect.x = x * TILESIZE
         self.hit_rect.y = y * TILESIZE
@@ -206,6 +195,13 @@ class Wall(pg.sprite.Sprite):
         self.rect = self.iso_image.get_rect() if gamestate["iso_mode"] else self.image.get_rect()
         self.rect.x = self.x * TILESIZE
         self.rect.y = self.y * TILESIZE
+
+    def animate_tick(self):
+        self.anim_frame = self.anim_frame + 1
+        if self.anim_frame >= len(terrain_types[self.terrain_type["name"]]['iso_images']):
+            self.anim_frame = 0
+        self.iso_image = terrain_types[self.terrain_type["name"]]['iso_images'][self.anim_frame]
+
 
 class Bullet(pg.sprite.Sprite):
     def __init__(self, game, pos, dir):

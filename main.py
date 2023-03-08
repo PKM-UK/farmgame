@@ -66,12 +66,15 @@ class Game:
             # load and transform, put in appropriate map
             img = pg.image.load(path.join(img_folder, ttype["tile"])).convert_alpha()
             img = pg.transform.scale(img, (TILESIZE, TILESIZE))
-            self.terrain_images[tname] = img
+            # self.terrain_images[tname] = img
+            terrain_types[tkey]['img'] = img
 
-            iso_img = pg.image.load(path.join(img_folder, ttype["isotile"])).convert_alpha()
-            iso_img = pg.transform.scale(iso_img, (TILESIZE * 2, floor(
-                (iso_img.get_rect().height / iso_img.get_rect().width) * TILESIZE * 2)))
-            self.terrain_iso_images[tname] = iso_img
+            for isotilepath in ttype["isotiles"]:
+                iso_img = pg.image.load(path.join(img_folder, isotilepath)).convert_alpha()
+                iso_img = pg.transform.scale(iso_img, (TILESIZE * 2, floor(
+                    (iso_img.get_rect().height / iso_img.get_rect().width) * TILESIZE * 2)))
+                # self.terrain_iso_images[tname] = iso_img
+                terrain_types[tkey]['iso_images'].append(iso_img)
 
         self.bullet_img = pg.image.load(path.join(img_folder, BULLET_IMG)).convert_alpha()
 
@@ -83,6 +86,7 @@ class Game:
         self.walls = pg.sprite.Group()
         self.mobs = pg.sprite.Group()
         self.bullets = pg.sprite.Group()
+        self.animated = pg.sprite.Group()
 
         # Give us row index and line of file
         for row, tiles in enumerate(self.map.data):
@@ -92,10 +96,11 @@ class Game:
                 elif tile == 'z':
                     Mob(self, col, row)
                 else:
-                    Wall(self, col, row, map_char_mapping[tile])
+                    terrain_type = map_char_mapping[tile]
+                    Wall(self, col, row, terrain_type)
         self.camera = Camera(self.map.pixelwidth, self.map.pixelheight, self.gamestate["iso_mode"])
 
-        self.anim = Animator(self.walls)
+        self.anim = Animator(self.animated)
 
     def run(self):
         # game loop - set self.playing = False to end the game

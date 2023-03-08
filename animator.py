@@ -11,3 +11,6 @@ class Animator:
         if now - self.lasttick > self.update_interval:
             self.lasttick = now
             print(f"Animator ticking at {self.lasttick}")
+
+            for sprite in self.group.sprites():
+                sprite.animate_tick()
