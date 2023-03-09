@@ -8,6 +8,7 @@ from settings import *
 from sprites import *
 from map import *
 from animator import *
+from terrain import *
 from os import path
 from math import fmod, floor
 
@@ -62,19 +63,19 @@ class Game:
         for tkey in terrain_types.keys():
             ttype = terrain_types[tkey]
             # name from ttype
-            tname = ttype["name"]
+            tname = ttype.name
             # load and transform, put in appropriate map
-            img = pg.image.load(path.join(img_folder, ttype["tile"])).convert_alpha()
+            img = pg.image.load(path.join(img_folder, ttype.tile)).convert_alpha()
             img = pg.transform.scale(img, (TILESIZE, TILESIZE))
             # self.terrain_images[tname] = img
-            terrain_types[tkey]['img'] = img
+            terrain_types[tkey].img = img
 
-            for isotilepath in ttype["isotiles"]:
+            for isotilepath in ttype.isotiles:
                 iso_img = pg.image.load(path.join(img_folder, isotilepath)).convert_alpha()
                 iso_img = pg.transform.scale(iso_img, (TILESIZE * 2, floor(
                     (iso_img.get_rect().height / iso_img.get_rect().width) * TILESIZE * 2)))
                 # self.terrain_iso_images[tname] = iso_img
-                terrain_types[tkey]['iso_images'].append(iso_img)
+                terrain_types[tkey].iso_images.append(iso_img)
 
         self.bullet_img = pg.image.load(path.join(img_folder, BULLET_IMG)).convert_alpha()
 
@@ -98,6 +99,7 @@ class Game:
                 else:
                     terrain_type = map_char_mapping[tile]
                     Wall(self, col, row, terrain_type)
+
         self.camera = Camera(self.map.pixelwidth, self.map.pixelheight, self.gamestate["iso_mode"])
 
         self.anim = Animator(self.animated)
@@ -224,7 +226,7 @@ class Game:
 
         for stand in stands:
             print(f"{stand.x}, {stand.y}, {stand.terrain_type}")
-            if stand.x == grid_ref_x and stand.y == grid_ref_y and stand.terrain_type['name'] == "dirt":
+            if stand.x == grid_ref_x and stand.y == grid_ref_y and stand.terrain_type.name == "dirt":
                 stand.kill()
                 new_wall = Wall(self, grid_ref_x, grid_ref_y, terrain_types["grass"])
                 new_wall.change_mode(self.gamestate)

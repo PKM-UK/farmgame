@@ -1,6 +1,7 @@
 import pygame as pg
 from settings import *
 
+
 def collide_hit_rect(one, two):
     # Player, wall
     return one.hit_rect.colliderect(two.hit_rect)
@@ -8,6 +9,9 @@ def collide_hit_rect(one, two):
 class Map:
     def __init__(self, filename):
         self.data = []
+        self.sprites = [[]]
+        self.effects = [[]]
+
         with open(filename, 'rt') as f:
             for line in f:
                 self.data.append(line.strip())
@@ -19,6 +23,9 @@ class Map:
         # Number of pixels across map
         self.pixelwidth = self.tilewidth * TILESIZE
         self.pixelheight = self.tileheight * TILESIZE
+
+    def add_sprite(self, x, y, sprite):
+        self.sprites[x][y] = sprite
 
 class Camera:
     def __init__(self, width, height, iso):
