@@ -9,8 +9,8 @@ def collide_hit_rect(one, two):
 class Map:
     def __init__(self, filename):
         self.data = []
-        self.sprites = [[]]
-        self.effects = [[]]
+        self.sprites = []
+        self.effects = []
 
         with open(filename, 'rt') as f:
             for line in f:
@@ -24,8 +24,23 @@ class Map:
         self.pixelwidth = self.tilewidth * TILESIZE
         self.pixelheight = self.tileheight * TILESIZE
 
+        # Init map data arrays
+        sprite_top_row = ['pog' for x in range(self.tilewidth)]
+        for y in range(self.tileheight):
+            self.sprites.append(sprite_top_row.copy())
+        print(f"Sprite array is now {len(self.sprites[0])} wide, {len(self.sprites)} high")
+
     def add_sprite(self, x, y, sprite):
-        self.sprites[x][y] = sprite
+        print(f"Adding sprite at {x}, {y}*")
+        self.sprites[y][x] = sprite
+
+    def get_affected_squares(self, effect_name):
+        # STUB
+        e_squares = []
+        for x in range(2,4):
+            for y in range(3,6):
+                e_squares.append((x,y))
+        return e_squares
 
 class Camera:
     def __init__(self, width, height, iso):

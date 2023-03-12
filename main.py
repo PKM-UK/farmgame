@@ -9,6 +9,7 @@ from sprites import *
 from map import *
 from animator import *
 from terrain import *
+from effect import *
 from os import path
 from math import fmod, floor
 
@@ -47,6 +48,9 @@ class Game:
         self.gamestate = {}
         self.gamestate["iso_mode"] = False
 
+        self.effect_update_interval = 1000
+        self.last_effect_tick = pg.time.get_ticks()
+
 
 
     def load_data(self):
@@ -54,6 +58,7 @@ class Game:
         game_folder = path.dirname(__file__)
         img_folder = path.join(game_folder, "img")
 
+        print('Initing Map')
         self.map = Map(path.join(game_folder, "map.txt"))
         self.player_img = pg.image.load(path.join(img_folder, PLAYER_IMG)).convert_alpha()
         self.iso_player_img = pg.image.load(path.join(img_folder, ISO_PLAYER_IMG)).convert_alpha()
@@ -83,6 +88,7 @@ class Game:
 
     def new(self):
         # initialize all variables and do all the setup for a new game
+        print('New game')
         self.all_sprites = pg.sprite.Group()
         self.walls = pg.sprite.Group()
         self.mobs = pg.sprite.Group()
@@ -90,6 +96,7 @@ class Game:
         self.animated = pg.sprite.Group()
 
         # Give us row index and line of file
+        print('Adding sprites')
         for row, tiles in enumerate(self.map.data):
             for col, tile in enumerate(tiles):
                 if tile == 'p':
@@ -98,11 +105,14 @@ class Game:
                     Mob(self, col, row)
                 else:
                     terrain_type = map_char_mapping[tile]
-                    Wall(self, col, row, terrain_type)
+                    wall_sprite = Wall(self, col, row, terrain_type)
+                    self.map.add_sprite(col, row, wall_sprite)
 
         self.camera = Camera(self.map.pixelwidth, self.map.pixelheight, self.gamestate["iso_mode"])
 
         self.anim = Animator(self.animated)
+
+        self.effects = {'water': Effect(self, 'water', 0.1)}
 
     def run(self):
         # game loop - set self.playing = False to end the game
@@ -139,6 +149,35 @@ class Game:
             hit.health -= BULLET_DMG
 
         self.anim.tick()
+
+        now = pg.time.get_ticks()
+        if now - self.last_effect_tick > self.effect_update_interval:
+            self.last_effect_tick = now
+            print('doing fx')
+            for effect_name in ['water']:
+                effect = self.effects[effect_name]
+                e_squares = self.map.get_affected_squares(effect_name)
+                for square in e_squares:
+                    # STUB
+                    x = square[0]
+                    y = square[1]
+
+                    rnd = uniform(0.0,1.0)
+                    if self.map.sprites[y][x].terrain_type.name in effect.affected_types and rnd < effect.probability:
+                        effect.do_thing(square, self.map.sprites[y][x])
+
+        # For each effect type:
+        #  ask map for tiles with that effect (also with terrain type filter?)
+        #  for each square affected by effect:
+        #   do effect probability
+        #   if effect fires on square, call callback with coords and sprite
+
+        # watered effect attributes:
+        #
+
+        # watered effect callback:
+        # kill dirt sprite
+        # create grass sprite at co-ords
 
     def draw_grid(self):
 
@@ -233,7 +272,7 @@ class Game:
 
 # create the game object
 g = Game()
-g.show_start_screen()
+g.show_start_screen()#
 while True:
     g.new()
     g.run()
