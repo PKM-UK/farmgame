@@ -48,7 +48,7 @@ class Game:
         self.gamestate = {}
         self.gamestate["iso_mode"] = False
 
-        self.effect_update_interval = 1000
+        self.effect_update_interval = 3000
         self.last_effect_tick = pg.time.get_ticks()
 
 
@@ -112,7 +112,7 @@ class Game:
 
         self.anim = Animator(self.animated)
 
-        self.effects = {'water': Effect(self, 'water', 0.1)}
+        self.effects = {'water': WateredEffect(self, 'water', 0.05)}
 
     def run(self):
         # game loop - set self.playing = False to end the game

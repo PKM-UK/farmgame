@@ -5,6 +5,14 @@ class Effect():
         self.game = game
         self.name = name
         self.probability = p
+        self.affected_types = []
+
+    def do_thing(self, square, sprite):
+        pass
+
+class WateredEffect(Effect):
+    def __init__(self, game, name, p):
+        super().__init__(game, name, p)
         self.affected_types = ['dirt']
 
     def do_thing(self, square, sprite):
