@@ -25,9 +25,10 @@ class Map:
         self.pixelheight = self.tileheight * TILESIZE
 
         # Init map data arrays
-        sprite_top_row = ['pog' for x in range(self.tilewidth)]
+        sprite_top_row = [None for x in range(self.tilewidth)]
         for y in range(self.tileheight):
             self.sprites.append(sprite_top_row.copy())
+            self.effects.append(sprite_top_row.copy())
         print(f"Sprite array is now {len(self.sprites[0])} wide, {len(self.sprites)} high")
 
     def add_sprite(self, x, y, sprite):
@@ -37,10 +38,28 @@ class Map:
     def get_affected_squares(self, effect_name):
         # STUB
         e_squares = []
-        for x in range(2,4):
-            for y in range(3,6):
-                e_squares.append((x,y))
+        for x in range(self.tilewidth):
+            for y in range(self.tileheight):
+                if self.effects[y][x] is not None and effect_name in self.effects[y][x]:
+                    e_squares.append((x,y))
         return e_squares
+
+    def add_effect_circle(self, cx, cy, r, effect_name):
+        min_y = max(cy - r, 0)
+        max_y = min(cy + r, self.tileheight-1)
+        min_x = max(cx - r, 0)
+        max_x = min(cx + r, self.tilewidth - 1)
+
+        for y in range(min_y, max_y + 1):
+            for x in range(min_x, max_x + 1):
+                if ((x-cx)**2 + (y-cy)**2) >= r**2:
+                    continue
+                effect_cell = self.effects[y][x]
+                if effect_cell is not None and effect_name not in effect_cell:
+                    self.effects[y][x].append(effect_name)
+                else:
+                    self.effects[y][x] = [effect_name]
+
 
 class Camera:
     def __init__(self, width, height, iso):

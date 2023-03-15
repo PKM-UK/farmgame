@@ -112,7 +112,7 @@ class Game:
 
         self.anim = Animator(self.animated)
 
-        self.effects = {'water': WateredEffect(self, 'water', 0.05)}
+        self.effects = {'water': WateredEffect(self, 'water', WATERED_EFFECT_P)}
 
     def run(self):
         # game loop - set self.playing = False to end the game
@@ -163,7 +163,7 @@ class Game:
                     y = square[1]
 
                     rnd = uniform(0.0,1.0)
-                    if self.map.sprites[y][x].terrain_type.name in effect.affected_types and rnd < effect.probability:
+                    if self.map.sprites[y][x] and self.map.sprites[y][x].terrain_type.name in effect.affected_types and rnd < effect.probability:
                         effect.do_thing(square, self.map.sprites[y][x])
 
         # For each effect type:
@@ -257,6 +257,11 @@ class Game:
         stands = pg.sprite.spritecollide(sprite, group, False, collide_hit_rect)
         return stands
 
+    def add_terrain(self, col, row, terrain_type):
+        wall_sprite = Wall(self, col, row, terrain_type)
+        self.walls.change_layer(wall_sprite, col + row)
+        self.map.add_sprite(col, row, wall_sprite)
+
     def dig_dirt(self, x, y):
         stands = self.tiles_standing_on(self.player, self.walls)
         grid_ref_x = int((x + (TILESIZE / 2)) // TILESIZE)
@@ -269,6 +274,10 @@ class Game:
                 stand.kill()
                 new_wall = Wall(self, grid_ref_x, grid_ref_y, terrain_types["grass"])
                 new_wall.change_mode(self.gamestate)
+
+                # Add effect
+                self.map.add_effect_circle(stand.x, stand.y, WATERED_EFFECT_R, 'water')
+
 
 # create the game object
 g = Game()
