@@ -90,6 +90,7 @@ class Game:
         # initialize all variables and do all the setup for a new game
         print('New game')
         self.all_sprites = pg.sprite.Group()
+        self.ordered_sprites = []
         self.walls = pg.sprite.Group()
         self.mobs = pg.sprite.Group()
         self.bullets = pg.sprite.Group()
@@ -107,6 +108,10 @@ class Game:
                     terrain_type = map_char_mapping[tile]
                     wall_sprite = Wall(self, col, row, terrain_type)
                     self.map.add_sprite(col, row, wall_sprite)
+                    self.ordered_sprites.append(wall_sprite)
+
+        # Now sort walls by Z
+        self.sort_sprites()
 
         self.camera = Camera(self.map.pixelwidth, self.map.pixelheight, self.gamestate["iso_mode"])
 
@@ -166,21 +171,7 @@ class Game:
                     if self.map.sprites[y][x] and self.map.sprites[y][x].terrain_type.name in effect.affected_types and rnd < effect.probability:
                         effect.do_thing(square, self.map.sprites[y][x])
 
-        # For each effect type:
-        #  ask map for tiles with that effect (also with terrain type filter?)
-        #  for each square affected by effect:
-        #   do effect probability
-        #   if effect fires on square, call callback with coords and sprite
-
-        # watered effect attributes:
-        #
-
-        # watered effect callback:
-        # kill dirt sprite
-        # create grass sprite at co-ords
-
     def draw_grid(self):
-
         for x in range(0, WIDTH+TILESIZE, TILESIZE):
             xfloat = x + fmod(self.camera.viewport.left, TILESIZE)
             line_rect = pg.Rect(x, 0, 0, 0)
@@ -212,7 +203,9 @@ class Game:
         pg.display.set_caption("{:.2f}".format(self.clock.get_fps()))
         self.screen.fill(BGCOLOR)
         self.draw_grid()
-        for sprite in self.all_sprites:
+
+
+        for sprite in self.ordered_sprites:
             if isinstance(sprite, Mob):
                 sprite.draw_health()
 
@@ -259,8 +252,18 @@ class Game:
 
     def add_terrain(self, col, row, terrain_type):
         wall_sprite = Wall(self, col, row, terrain_type)
-        self.walls.change_layer(wall_sprite, col + row)
+        wall_sprite.change_mode(self.gamestate)
+        self.ordered_sprites.append(wall_sprite)
+        self.sort_sprites()
+
         self.map.add_sprite(col, row, wall_sprite)
+
+    def sort_sprites(self):
+        self.ordered_sprites.sort(key=lambda s: s.x + s.y)
+
+    def killing(self, sprite):
+        self.ordered_sprites.remove(sprite)
+        sprite.kill()
 
     def dig_dirt(self, x, y):
         stands = self.tiles_standing_on(self.player, self.walls)
@@ -271,9 +274,7 @@ class Game:
         for stand in stands:
             print(f"{stand.x}, {stand.y}, {stand.terrain_type}")
             if stand.x == grid_ref_x and stand.y == grid_ref_y and stand.terrain_type.name == "dirt":
-                stand.kill()
-                new_wall = Wall(self, grid_ref_x, grid_ref_y, terrain_types["grass"])
-                new_wall.change_mode(self.gamestate)
+                self.add_terrain(grid_ref_x, grid_ref_y, terrain_types["grass"])
 
                 # Add effect
                 self.map.add_effect_circle(stand.x, stand.y, WATERED_EFFECT_R, 'water')
