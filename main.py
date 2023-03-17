@@ -189,7 +189,7 @@ class Game:
             camera_rect2 = self.camera.apply_rect(line_rect2)
 
             # pg.draw.line(self.screen, LIGHTGREY, (xfloat, 0), (xfloat, HEIGHT))
-            pg.draw.line(self.screen, LIGHTGREY, camera_rect.topleft, camera_rect2.topleft)
+            pg.draw.line(self.screen, WHITE, camera_rect.topleft, camera_rect2.topleft)
         for y in range(0, HEIGHT+TILESIZE, TILESIZE):
             yfloat = y + fmod(self.camera.viewport.top, TILESIZE)
 
@@ -198,7 +198,7 @@ class Game:
             camera_rect = self.camera.apply_rect(line_rect)
             camera_rect2 = self.camera.apply_rect(line_rect2)
 
-            pg.draw.line(self.screen, LIGHTGREY, camera_rect.topleft, camera_rect2.topleft)
+            pg.draw.line(self.screen, WHITE, camera_rect.topleft, camera_rect2.topleft)
 
 
 
@@ -211,7 +211,7 @@ class Game:
     def draw(self):
         pg.display.set_caption("{:.2f}".format(self.clock.get_fps()))
         self.screen.fill(BGCOLOR)
-        self.draw_grid()
+
         for sprite in self.all_sprites:
             if isinstance(sprite, Mob):
                 sprite.draw_health()
@@ -223,6 +223,8 @@ class Game:
 
         self.screen.blit(self.player.iso_image if self.gamestate["iso_mode"] else self.player.image, self.camera.apply(self.player))
         draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
+
+        self.draw_grid()
         # draw_player_heading(self.screen)
 
 
@@ -272,7 +274,7 @@ class Game:
             print(f"{stand.x}, {stand.y}, {stand.terrain_type}")
             if stand.x == grid_ref_x and stand.y == grid_ref_y and stand.terrain_type.name == "dirt":
                 stand.kill()
-                new_wall = Wall(self, grid_ref_x, grid_ref_y, terrain_types["grass"])
+                new_wall = Wall(self, grid_ref_x, grid_ref_y, terrain_types["well"])
                 new_wall.change_mode(self.gamestate)
 
                 # Add effect
