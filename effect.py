@@ -16,5 +16,5 @@ class WateredEffect(Effect):
         self.affected_types = ['dirt']
 
     def do_thing(self, square, sprite):
-        sprite.kill
-        new_sprite = Wall(self.game, square[0], square[1], terrain_types['grass'])
+        self.game.killing(sprite)
+        self.game.add_terrain(square[0], square[1], terrain_types['grass'])
