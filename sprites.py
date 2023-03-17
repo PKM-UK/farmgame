@@ -16,14 +16,16 @@ terrain_types = {
     'dirt': Terrain('dirt', False, 'dirtTile.png', ['isodirtTile.png']),
     'grass': Terrain('grass', False, 'grassTile.png', ['isograssTile.png']),
     'tree': Terrain('tree', True, 'treeTile.png', ['isotreeTile1.png', 'isotreeTile2.png', 'isotreeTile1.png']),
-    'wall': Terrain('wall', True, 'wallTile.png', ['isowallTile.png'])
+    'wall': Terrain('wall', True, 'wallTile.png', ['isowallTile.png']),
+    'well': Terrain('wall', True, 'wellTile.png', ['isowellTile.png'])
 }
 
 map_char_mapping = {
     ".": terrain_types["dirt"],
     "g": terrain_types["grass"],
     "t": terrain_types["tree"],
-    "w": terrain_types["wall"]
+    "w": terrain_types["wall"],
+    "W": terrain_types["well"]
 }
 
 
