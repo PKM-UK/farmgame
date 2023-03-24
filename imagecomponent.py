@@ -1,5 +1,6 @@
 from os import path
 import pygame as pg
+from settings import *
 
 LGOAT_IMG = 'lgoat.png'
 RGOAT_IMG = 'rgoat.png'
@@ -29,6 +30,8 @@ class GoatImageComponent(ImageComponent):
         if GoatImageComponent.left_goat_img is None:
             GoatImageComponent.left_goat_img = pg.image.load(path.join(ImageComponent.img_folder, LGOAT_IMG)).convert_alpha()
             GoatImageComponent.right_goat_img = pg.image.load(path.join(ImageComponent.img_folder, RGOAT_IMG)).convert_alpha()
+            GoatImageComponent.left_goat_img = pg.transform.scale(GoatImageComponent.left_goat_img, (TILESIZE, TILESIZE))
+            GoatImageComponent.right_goat_img = pg.transform.scale(GoatImageComponent.right_goat_img, (TILESIZE, TILESIZE))
 
     def get_image(self, heading):
         if -45 < heading < 135:

@@ -129,6 +129,9 @@ class Game:
 
         self.effects = {'water': WateredEffect(self, 'water', WATERED_EFFECT_P)}
 
+
+        self.change_mode()
+
     def run(self):
         # game loop - set self.playing = False to end the game
         self.playing = True
@@ -235,11 +238,24 @@ class Game:
         # draw_player_heading(self.screen)
 
 
+
+        """
         # Draw hitboxes
         for sprite in self.mobs:
             pg.draw.rect(self.screen, RED, self.camera.apply_rect(sprite.hit_rect), 2)
+            pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(sprite.rect), 2)
+
+        pg.draw.rect(self.screen, RED, self.camera.apply_rect(self.player.hit_rect), 2)
+        pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(self.player.rect), 2)
+        """
 
         pg.display.flip()
+
+    def change_mode(self):
+        self.gamestate["iso_mode"] = not self.gamestate["iso_mode"]
+        self.camera.set_iso(self.gamestate["iso_mode"])
+        for wall in self.walls:
+            wall.change_mode(self.gamestate)
 
     def events(self):
         # catch all events here
@@ -250,10 +266,7 @@ class Game:
                 if event.key == pg.K_ESCAPE:
                     self.quit()
                 elif event.key == pg.K_i:
-                    self.gamestate["iso_mode"] = not self.gamestate["iso_mode"]
-                    self.camera.set_iso(self.gamestate["iso_mode"])
-                    for wall in self.walls:
-                        wall.change_mode(self.gamestate)
+                    self.change_mode()
 
 
     def show_start_screen(self):
