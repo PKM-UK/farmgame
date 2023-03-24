@@ -7,6 +7,7 @@ import sys
 from settings import *
 from sprites import *
 from imagecomponent import *
+from controlcomponent import *
 from map import *
 from animator import *
 from terrain import *
@@ -108,6 +109,7 @@ class Game:
                 if tile == 'z':
                     mob_sprite = Mob(self, col, row)
                     mob_sprite.ImageComponent = GoatImageComponent(self, mob_sprite)
+                    mob_sprite.ControlComponent = HunterControlComponent(self, mob_sprite)
                     self.ordered_sprites.append(mob_sprite)
 
                     tile = '.'   # Dirty hax to put dirt under mobs

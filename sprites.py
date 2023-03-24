@@ -150,14 +150,9 @@ class Mob(pg.sprite.Sprite):
         self.ImageComponent = None
 
     def update(self, gamestate):
-        # CONTROL
-        aim_vec = self.game.player.pos - self.pos
-        self.rot = aim_vec.angle_to(vec(1,0))
 
-        # PHYSICS
-        self.acc = vec(MOB_SPEED, 0).rotate(-self.rot)
-        self.vel *= 0.98
-        self.vel += self.acc * self.game.dt
+        # CONTROL
+        self.rot, self.vel = self.ControlComponent.get_control()
 
         # POSITION
         # self.image = pg.transform.rotate(self.game.mob_img, self.rot)
