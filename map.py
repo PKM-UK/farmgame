@@ -32,7 +32,6 @@ class Map:
         print(f"Sprite array is now {len(self.sprites[0])} wide, {len(self.sprites)} high")
 
     def add_sprite(self, x, y, sprite):
-        print(f"Adding sprite at {x}, {y}*")
         self.sprites[y][x] = sprite
 
     def get_affected_squares(self, effect_name):
@@ -90,9 +89,6 @@ class Camera:
     def apply_rect(self, rect):
         # return entity.rect.move((self.viewport.left, self.viewport.top)) # Old 2d viewport
         return self.isofy(rect.move((self.viewport.left, self.viewport.top)))
-
-    def applyrect(self, rect):
-        return rect.move(self.viewport.topleft)
 
     def update(self, target):
         x = max(min(-target.rect.centerx + int(WIDTH / 2), 0), WIDTH - self.width)

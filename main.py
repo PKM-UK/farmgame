@@ -6,6 +6,7 @@ import pygame as pg
 import sys
 from settings import *
 from sprites import *
+from imagecomponent import *
 from map import *
 from animator import *
 from terrain import *
@@ -49,7 +50,11 @@ class Game:
         self.gamestate["iso_mode"] = False
 
         self.effect_update_interval = 3000
+        self.z_sort_interval = 250
+
         self.last_effect_tick = pg.time.get_ticks()
+        self.last_z_sort_tick = self.last_effect_tick
+
 
 
 
@@ -100,15 +105,18 @@ class Game:
         print('Adding sprites')
         for row, tiles in enumerate(self.map.data):
             for col, tile in enumerate(tiles):
-                if tile == 'p':
-                    self.player = Player(self, col, row)
-                elif tile == 'z':
-                    Mob(self, col, row)
-                else:
-                    terrain_type = map_char_mapping[tile]
-                    wall_sprite = Wall(self, col, row, terrain_type)
-                    self.map.add_sprite(col, row, wall_sprite)
-                    self.ordered_sprites.append(wall_sprite)
+                if tile == 'z':
+                    mob_sprite = Mob(self, col, row)
+                    mob_sprite.ImageComponent = GoatImageComponent(self, mob_sprite)
+                    self.ordered_sprites.append(mob_sprite)
+
+                    tile = '.'   # Dirty hax to put dirt under mobs
+                terrain_type = map_char_mapping[tile]
+                wall_sprite = Wall(self, col, row, terrain_type)
+                self.map.add_sprite(col, row, wall_sprite)
+                self.ordered_sprites.append(wall_sprite)
+
+        self.player = Player(self, 2, 2)
 
         # Now sort walls by Z
         self.sort_sprites()
@@ -153,6 +161,7 @@ class Game:
             hit.vel += hits[hit][0].vel * 0.05
             hit.health -= BULLET_DMG
 
+        # Do things that tick
         self.anim.tick()
 
         now = pg.time.get_ticks()
@@ -170,6 +179,9 @@ class Game:
                     rnd = uniform(0.0,1.0)
                     if self.map.sprites[y][x] and self.map.sprites[y][x].terrain_type.name in effect.affected_types and rnd < effect.probability:
                         effect.do_thing(square, self.map.sprites[y][x])
+
+        if now - self.last_z_sort_tick > self.z_sort_interval:
+            self.sort_sprites()
 
     def draw_grid(self):
         for x in range(0, WIDTH+TILESIZE, TILESIZE):
@@ -203,8 +215,7 @@ class Game:
         pg.display.set_caption("{:.2f}".format(self.clock.get_fps()))
         self.screen.fill(BGCOLOR)
 
-        self.draw_grid()
-
+        # self.draw_grid()
 
         for sprite in self.ordered_sprites:
             if isinstance(sprite, Mob):
@@ -218,13 +229,13 @@ class Game:
         self.screen.blit(self.player.iso_image if self.gamestate["iso_mode"] else self.player.image, self.camera.apply(self.player))
         draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
 
-        self.draw_grid()
+        # self.draw_grid()
         # draw_player_heading(self.screen)
 
 
         # Draw hitboxes
         for sprite in self.mobs:
-            pg.draw.rect(self.screen, RED, self.camera.applyrect(sprite.hitrect), 2)
+            pg.draw.rect(self.screen, RED, self.camera.apply_rect(sprite.hit_rect), 2)
 
         pg.display.flip()
 

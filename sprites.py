@@ -132,14 +132,22 @@ class Mob(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = game.mob_img
+        self.iso_image = game.mob_img
+
         self.rect = self.image.get_rect()
         self.hit_rect = MOB_HIT_RECT.copy()
+        self.x = x
+        self.y = y
         self.pos = vec(x, y) * TILESIZE
         self.rect.center = self.pos
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
         self.rot = 0
         self.health = MOB_HEALTH
+
+        # Components
+        self.ControlComponent = None
+        self.ImageComponent = None
 
     def update(self, gamestate):
         # CONTROL
@@ -152,7 +160,10 @@ class Mob(pg.sprite.Sprite):
         self.vel += self.acc * self.game.dt
 
         # POSITION
-        self.image = pg.transform.rotate(self.game.mob_img, self.rot)
+        # self.image = pg.transform.rotate(self.game.mob_img, self.rot)
+        self.image = self.ImageComponent.get_image(self.rot) if self.ImageComponent else self.game.mob_img
+        self.iso_image = self.image
+
         self.rect = self.image.get_rect()
         self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
         self.hit_rect.centerx = self.pos.x
@@ -160,6 +171,10 @@ class Mob(pg.sprite.Sprite):
         self.hit_rect.centery = self.pos.y
         collide_with_walls(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
+
+        # I know, DRY, but this makes the whole iso thing easier
+        self.x = self.pos.x
+        self.y = self.pos.y
 
         # COMBAT
         if self.health < 0:
