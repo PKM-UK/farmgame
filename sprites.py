@@ -3,29 +3,34 @@ from settings import *
 from terrain import *
 from map import collide_hit_rect
 from random import uniform
+from enum import Enum
 vec = pg.math.Vector2
 
-"""terrain_types = {
-    "dirt": {"name": "dirt", "obstacle": False, "tile": "dirtTile.png", "isotiles": ["isodirtTile.png"], 'img': None, 'iso_images': []},
-    "grass": {"name": "grass", "obstacle": False, "tile": "grassTile.png", "isotiles": ["isograssTile.png"], 'img': None, 'iso_images': []},
-    "tree": {"name": "tree", "obstacle": True, "tile": "treeTile.png", "isotiles": ["isotreeTile1.png", "isotreeTile2.png"], 'img': None, 'iso_images': []},
-    "wall": {"name": "wall", "obstacle": True, "tile": "wallTile.png", "isotiles": ["isowallTile.png"], 'img': None, 'iso_images': []}
-}"""
+# TerrainTypes = Enum('TerrainTypes', ['dirt', 'shortgrass', 'longgrass', 'wall', 'well'])
+class TerrainTypes(Enum):
+    dirt = 1
+    shortgrass = 2
+    longgrass = 3
+    tree = 4
+    wall = 5
+    well = 6
+
 
 terrain_types = {
-    'dirt': Terrain('dirt', False, 'dirtTile.png', ['isodirtTile.png']),
-    'grass': Terrain('grass', False, 'grassTile.png', ['isograssTile.png']),
-    'tree': Terrain('tree', True, 'treeTile.png', ['isotreeTile1.png', 'isotreeTile2.png', 'isotreeTile1.png']),
-    'wall': Terrain('wall', True, 'wallTile.png', ['isowallTile.png']),
-    'well': Terrain('wall', True, 'wellTile.png', ['isowellTile.png'])
+    TerrainTypes.dirt: Terrain(TerrainTypes.dirt, False, 'dirtTile.png', ['isodirtTile.png']),
+    TerrainTypes.shortgrass: Terrain(TerrainTypes.shortgrass, False, 'grassTile.png', ['isoshortgrassTile.png']),
+    TerrainTypes.longgrass: Terrain(TerrainTypes.longgrass, False, 'grassTile.png', ['isolonggrassTile.png']),
+    TerrainTypes.tree: Terrain(TerrainTypes.tree, True, 'treeTile.png', ['isotreeTile1.png', 'isotreeTile2.png', 'isotreeTile1.png']),
+    TerrainTypes.wall: Terrain(TerrainTypes.wall, True, 'wallTile.png', ['isowallTile.png']),
+    TerrainTypes.well: Terrain(TerrainTypes.wall, True, 'wellTile.png', ['isowellTile.png'])
 }
 
 map_char_mapping = {
-    ".": terrain_types["dirt"],
-    "g": terrain_types["grass"],
-    "t": terrain_types["tree"],
-    "w": terrain_types["wall"],
-    "W": terrain_types["well"]
+    ".": terrain_types[TerrainTypes.dirt],
+    "g": terrain_types[TerrainTypes.shortgrass],
+    "t": terrain_types[TerrainTypes.tree],
+    "w": terrain_types[TerrainTypes.wall],
+    "W": terrain_types[TerrainTypes.well]
 }
 
 
@@ -35,17 +40,21 @@ def collide_with_walls(sprite, group, dirr):
     if hits:
         if dirr == 'x':
             if sprite.hit_rect.centerx > hits[0].hit_rect.centerx:
-                sprite.pos.x = hits[0].hit_rect.right
+                print("Bump up x")
+                sprite.pos.x = max( hits[0].hit_rect.right + 1, sprite.pos.x + 1)
             elif sprite.hit_rect.centerx < hits[0].hit_rect.centerx:
-                sprite.pos.x = hits[0].hit_rect.left - sprite.hit_rect.width
+                print("Bump down x")
+                sprite.pos.x = min(hits[0].hit_rect.left - sprite.hit_rect.width - 1, sprite.pos.x - 1)
 
             sprite.vel.x = 0
             sprite.hit_rect.x = sprite.pos.x
         elif dirr == 'y':
             if sprite.hit_rect.centery > hits[0].hit_rect.centery:
-                sprite.pos.y = (hits[0].hit_rect.bottom)
+                print("Bump up y")
+                sprite.pos.y = hits[0].hit_rect.bottom + 1
             elif sprite.hit_rect.centery < hits[0].hit_rect.centery:
-                sprite.pos.y = hits[0].hit_rect.top - sprite.hit_rect.height
+                print("Bump down y")
+                sprite.pos.y = hits[0].hit_rect.top - sprite.hit_rect.height - 1
             sprite.vel.y = 0
             sprite.hit_rect.y = sprite.pos.y
 

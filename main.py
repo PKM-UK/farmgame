@@ -109,7 +109,7 @@ class Game:
                 if tile == 'z':
                     mob_sprite = Mob(self, col, row)
                     mob_sprite.ImageComponent = GoatImageComponent(self, mob_sprite)
-                    mob_sprite.ControlComponent = HunterControlComponent(self, mob_sprite)
+                    mob_sprite.ControlComponent = GrazerControlComponent(self, mob_sprite)
                     self.ordered_sprites.append(mob_sprite)
 
                     tile = '.'   # Dirty hax to put dirt under mobs
@@ -118,7 +118,7 @@ class Game:
                 self.map.add_sprite(col, row, wall_sprite)
                 self.ordered_sprites.append(wall_sprite)
 
-        self.player = Player(self, 2, 2)
+        self.player = Player(self, 6, 1)
 
         # Now sort walls by Z
         self.sort_sprites()
@@ -239,7 +239,7 @@ class Game:
 
 
 
-        """
+
         # Draw hitboxes
         for sprite in self.mobs:
             pg.draw.rect(self.screen, RED, self.camera.apply_rect(sprite.hit_rect), 2)
@@ -247,7 +247,7 @@ class Game:
 
         pg.draw.rect(self.screen, RED, self.camera.apply_rect(self.player.hit_rect), 2)
         pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(self.player.rect), 2)
-        """
+
 
         pg.display.flip()
 
@@ -302,9 +302,9 @@ class Game:
 
         for stand in stands:
             print(f"{stand.x}, {stand.y}, {stand.terrain_type}")
-            if stand.x == grid_ref_x and stand.y == grid_ref_y and stand.terrain_type.name == "dirt":
+            if stand.x == grid_ref_x and stand.y == grid_ref_y and stand.terrain_type.name == TerrainTypes.dirt:
 
-                self.add_terrain(grid_ref_x, grid_ref_y, terrain_types["well"])
+                self.add_terrain(grid_ref_x, grid_ref_y, terrain_types[TerrainTypes.well])
 
                 # Add effect
                 self.map.add_effect_circle(stand.x, stand.y, WATERED_EFFECT_R, 'water')

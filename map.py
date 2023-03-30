@@ -43,7 +43,8 @@ class Map:
                     e_squares.append((x,y))
         return e_squares
 
-    def add_effect_circle(self, cx, cy, r, effect_name):
+    def get_tile_circle(self, cx, cy, r, layer):
+        tiles = []
         min_y = max(cy - r, 0)
         max_y = min(cy + r, self.tileheight-1)
         min_x = max(cx - r, 0)
@@ -53,6 +54,19 @@ class Map:
             for x in range(min_x, max_x + 1):
                 if ((x-cx)**2 + (y-cy)**2) >= r**2:
                     continue
+                tiles.append(self.effects[y][x] if layer == 'fx' else self.sprites[y][x])
+
+        return tiles
+
+    def add_effect_circle(self, cx, cy, r, effect_name):
+        tiles = []
+        min_y = max(cy - r, 0)
+        max_y = min(cy + r, self.tileheight-1)
+        min_x = max(cx - r, 0)
+        max_x = min(cx + r, self.tilewidth - 1)
+
+        for y in range(min_y, max_y + 1):
+            for x in range(min_x, max_x + 1):
                 effect_cell = self.effects[y][x]
                 if effect_cell is not None and effect_name not in effect_cell:
                     self.effects[y][x].append(effect_name)
