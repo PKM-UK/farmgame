@@ -12,6 +12,7 @@ from map import *
 from animator import *
 from terrain import *
 from effect import *
+from task import *
 from os import path
 from math import fmod, floor
 
@@ -56,7 +57,7 @@ class Game:
         self.last_effect_tick = pg.time.get_ticks()
         self.last_z_sort_tick = self.last_effect_tick
 
-
+        self.active_task = None
 
 
     def load_data(self):
@@ -318,6 +319,15 @@ class Game:
     def killing(self, sprite):
         self.ordered_sprites.remove(sprite)
         sprite.kill()
+
+    # This should probably be generic and take dig_dirt as n argument
+    def task_dig_dirt(self, x, y):
+        if self.active_task is None:
+            self.active_task = Task(5, self.dig_dirt, x, y)
+        else:
+            complete = self.active_task.update(self.dt)
+            if complete:
+                self.active_task = None
 
     def dig_dirt(self, x, y):
         stands = self.tiles_standing_on(self.player, self.walls)
