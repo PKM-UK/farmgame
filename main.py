@@ -150,6 +150,9 @@ class Game:
         self.all_sprites.update(self.gamestate)
         self.camera.update(self.player)
 
+        # Mouse input
+        (self.hx, self.hy) = self.camera.get_hovered_tile(pg.mouse.get_pos())
+
         # Mobs hit player
         hits = pg.sprite.spritecollide(self.player, self.mobs, False, collide_hit_rect)
         for hit in hits:
@@ -187,6 +190,23 @@ class Game:
 
         if now - self.last_z_sort_tick > self.z_sort_interval:
             self.sort_sprites()
+
+    def draw_tile_boundaries(self, tx, ty):
+        # Isofy a tile, draw the resultant rhombus
+        wrect = pg.Rect(tx*TILESIZE, ty*TILESIZE, TILESIZE*2 if self.gamestate["iso_mode"] else TILESIZE, TILESIZE)
+        trect = self.camera.apply_rect(wrect)
+
+        if self.gamestate["iso_mode"]:
+            # Connect middles of sides
+            # midtop, midleft, midbottom, midright
+            pg.draw.line(self.screen, WHITE, trect.midtop, trect.midright, 2)
+            pg.draw.line(self.screen, WHITE, trect.midbottom, trect.midright, 2)
+            pg.draw.line(self.screen, WHITE, trect.midtop, trect.midleft, 2)
+            pg.draw.line(self.screen, WHITE, trect.midbottom, trect.midleft, 2)
+        else:
+            pg.draw.rect(self.screen, WHITE, trect, 2)
+
+
 
     def draw_grid(self):
         for x in range(0, WIDTH+TILESIZE, TILESIZE):
@@ -232,6 +252,11 @@ class Game:
                 pg.draw.rect(self.screen, BLUE, self.camera.apply(sprite), 1)
 
         self.screen.blit(self.player.iso_image if self.gamestate["iso_mode"] else self.player.image, self.camera.apply(self.player))
+
+        # Cursor hovered tile
+        self.draw_tile_boundaries(self.hx, self.hy)
+
+        # Draw cursor on hovered tile
         draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
 
         # self.draw_grid()
