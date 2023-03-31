@@ -40,20 +40,20 @@ def collide_with_walls(sprite, group, dirr):
     if hits:
         if dirr == 'x':
             if sprite.hit_rect.centerx > hits[0].hit_rect.centerx:
-                print("Bump up x")
+                print(f"Bump up x because {sprite.hit_rect.left} < {hits[0].hit_rect.right}")
                 sprite.pos.x = max( hits[0].hit_rect.right + 1, sprite.pos.x + 1)
             elif sprite.hit_rect.centerx < hits[0].hit_rect.centerx:
-                print("Bump down x")
+                print(f"Bump down x because {sprite.hit_rect.right} > {hits[0].hit_rect.left}")
                 sprite.pos.x = min(hits[0].hit_rect.left - sprite.hit_rect.width - 1, sprite.pos.x - 1)
 
             sprite.vel.x = 0
             sprite.hit_rect.x = sprite.pos.x
         elif dirr == 'y':
             if sprite.hit_rect.centery > hits[0].hit_rect.centery:
-                print("Bump up y")
+                print(f"Bump up y because {sprite.hit_rect.top} < {hits[0].hit_rect.bottom}")
                 sprite.pos.y = hits[0].hit_rect.bottom + 1
             elif sprite.hit_rect.centery < hits[0].hit_rect.centery:
-                print("Bump down y")
+                print(f"Bump down y because {sprite.hit_rect.bottom} > {hits[0].hit_rect.top}")
                 sprite.pos.y = hits[0].hit_rect.top - sprite.hit_rect.height - 1
             sprite.vel.y = 0
             sprite.hit_rect.y = sprite.pos.y

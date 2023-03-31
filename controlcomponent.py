@@ -59,15 +59,15 @@ class GrazerControlComponent(ControlComponent):
         self.target_square = None
         self.target_type = TerrainTypes.longgrass
         self.hunt_radius = GOAT_VISION_DISTACE
-        self.reached_food_tick = self.tick  # When did we get to the food?
+        self.reached_food_tick = -1  # When did we get to the food?
 
     def get_control(self):
         now = pg.time.get_ticks()
 
-        # if now - self.reached_food_tick > GOAT_EAT_TIME:
-            # self.game.eat_grass
-            # self.target_square = None
-            # self.reached_food_tick = now
+        if self.reached_food_tick > 0 and now - self.reached_food_tick > GOAT_EAT_TIME:
+            self.game.eat_grass(self.target_square.x, self.target_square.y)
+            self.target_square = None
+            self.reached_food_tick = -1
 
         if self.target_square is None:
             if now - self.tick > GOAT_ATTENTION_SPAN:
@@ -100,7 +100,8 @@ class GrazerControlComponent(ControlComponent):
             if target_vec.magnitude() < (TILESIZE//2):
                 # Within one square of target, stop and munch
                 self.vel = vec(0, 0)
-                self.reached_food_tick = now
+                if self.reached_food_tick < 0:
+                    self.reached_food_tick = now
             else:
                 self.vel = target_vec.normalize() * self.speed
                 self.rot = self.vel.angle_to(vec(1, 0))
