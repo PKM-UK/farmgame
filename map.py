@@ -97,12 +97,30 @@ class Camera:
         else:
             return rect
 
+    def unisofy(self, ix, iy):
+        # (ix + 2.iy - W / 2) / 2 = x
+        # (2.iy + W / 2 - ix) / 2 = y
+        if self.iso_mode:
+            world_x = (ix + (2 * iy) - (WIDTH/2)) / 2
+            world_y = ((2 * iy) + (WIDTH/2) - ix) / 2
+            return world_x-self.viewport.left, world_y-self.viewport.top
+        else:
+            return ix-self.viewport.left, iy-self.viewport.top
+
+
     def apply(self, entity):
         return self.apply_rect(entity.rect)
 
     def apply_rect(self, rect):
         # return entity.rect.move((self.viewport.left, self.viewport.top)) # Old 2d viewport
         return self.isofy(rect.move((self.viewport.left, self.viewport.top)))
+
+    def get_hovered_tile(self, mousetuple):
+        (mousex, mousey) = mousetuple
+        # Reverse camera transform, divide by TILESIZE
+        (worldx, worldy) = self.unisofy(mousex, mousey)
+        ht =  (worldx // TILESIZE, worldy // TILESIZE)
+        return ht
 
     def update(self, target):
         x = max(min(-target.rect.centerx + int(WIDTH / 2), 0), WIDTH - self.width)
