@@ -344,6 +344,13 @@ class Game:
                 # Add effect
                 self.map.add_effect_circle(stand.x, stand.y, WATERED_EFFECT_R, 'water')
 
+    def eat_grass(self, x, y):
+        eat_sprite = self.map.get_sprite_at(x, y)
+        if eat_sprite.terrain_type.name == TerrainTypes.longgrass:
+            self.killing(eat_sprite)
+            self.add_terrain(x, y, terrain_types[TerrainTypes.shortgrass])
+
+
 
 # create the game object
 g = Game()

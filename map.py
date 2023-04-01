@@ -34,6 +34,9 @@ class Map:
     def add_sprite(self, x, y, sprite):
         self.sprites[y][x] = sprite
 
+    def get_sprite_at(self, x, y):
+        return self.sprites[y][x]
+
     def get_affected_squares(self, effect_name):
         # STUB
         e_squares = []
