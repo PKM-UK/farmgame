@@ -36,6 +36,7 @@ def draw_player_health(surf, x, y, health):
     pg.draw.rect(surf, col, fill_rect)
     pg.draw.rect(surf, WHITE, outline_rect, 2) # specified width = outline rect
 
+
 class Game:
     def __init__(self):
         pg.init()
@@ -58,8 +59,9 @@ class Game:
         self.last_z_sort_tick = self.last_effect_tick
 
         self.active_task = None
+        # These should be members of Task we get when needed?
         self.task_continuing = False
-
+        self.task_progress = 0
 
     def load_data(self):
         # Load external stuff for game
@@ -244,6 +246,21 @@ class Game:
 
                 pg.draw.line(self.screen, RED, (iso_gridpoint.left, iso_gridpoint.top),(iso_gridpoint.right, iso_gridpoint.bottom))
 
+    def draw_progress_indicator(self, x, y, progress):
+        BAR_LENGTH = 50
+        BAR_HEIGHT = 10
+        filled_length = progress * BAR_LENGTH
+
+        srect = self.camera.apply_rect(pg.Rect(x*TILESIZE, y*TILESIZE, 0, 0))
+        sx = srect.x
+        sy = srect.y
+
+        outline_rect = pg.Rect(sx-(BAR_LENGTH//2), sy-(TILESIZE//2), BAR_LENGTH, BAR_HEIGHT)
+        fill_rect = pg.Rect(sx-(BAR_LENGTH//2), sy-(TILESIZE//2), filled_length, BAR_HEIGHT)
+
+        pg.draw.rect(self.screen, WHITE, fill_rect)
+        pg.draw.rect(self.screen, WHITE, outline_rect, 2)  # specified width = outline rect
+
     def draw(self):
         pg.display.set_caption("{:.2f}".format(self.clock.get_fps()))
         self.screen.fill(BGCOLOR)
@@ -266,7 +283,8 @@ class Game:
 
         # Draw cursor on hovered tile
         draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
-
+        if self.task_continuing:
+            self.draw_progress_indicator(self.hx, self.hy, self.task_progress)
         # self.draw_grid()
         # draw_player_heading(self.screen)
 
@@ -334,9 +352,11 @@ class Game:
             self.task_continuing = True
         else:
             complete = self.active_task.update(self.dt)
+
             if complete:
                 self.active_task = None
             else:
+                self.task_progress = self.active_task.progress / self.active_task.duration
                 self.task_continuing = True
 
     def dig_dirt(self, x, y):
