@@ -58,6 +58,7 @@ class Game:
         self.last_z_sort_tick = self.last_effect_tick
 
         self.active_task = None
+        self.task_continuing = False
 
 
     def load_data(self):
@@ -147,6 +148,8 @@ class Game:
         sys.exit()
 
     def update(self):
+        # What are we waiting to see this tick?
+        self.task_continuing = False
         # update portion of the game loop
         self.all_sprites.update(self.gamestate)
         self.camera.update(self.player)
@@ -191,6 +194,10 @@ class Game:
 
         if now - self.last_z_sort_tick > self.z_sort_interval:
             self.sort_sprites()
+
+        # End of update - close Tasks not updated this tick
+        if self.active_task is not None and self.task_continuing is False:
+            self.active_task = None
 
     def draw_tile_boundaries(self, tx, ty):
         # Isofy a tile, draw the resultant rhombus
@@ -321,28 +328,26 @@ class Game:
         sprite.kill()
 
     # This should probably be generic and take dig_dirt as n argument
-    def task_dig_dirt(self, x, y):
+    def task_dig_dirt(self):
         if self.active_task is None:
-            self.active_task = Task(5, self.dig_dirt, x, y)
+            self.active_task = Task(2, self.dig_dirt, floor(self.hx), floor(self.hy))
+            self.task_continuing = True
         else:
             complete = self.active_task.update(self.dt)
             if complete:
                 self.active_task = None
+            else:
+                self.task_continuing = True
 
     def dig_dirt(self, x, y):
-        stands = self.tiles_standing_on(self.player, self.walls)
-        grid_ref_x = int((x + (TILESIZE / 2)) // TILESIZE)
-        grid_ref_y = int((y + (TILESIZE / 2)) // TILESIZE)
-        print(f"We'r at grid {grid_ref_x}, {grid_ref_y}")
+        target_sprite = self.map.get_sprite_at(x, y)
+        if target_sprite.terrain_type.name == TerrainTypes.dirt:
+            self.killing(target_sprite)
 
-        for stand in stands:
-            print(f"{stand.x}, {stand.y}, {stand.terrain_type}")
-            if stand.x == grid_ref_x and stand.y == grid_ref_y and stand.terrain_type.name == TerrainTypes.dirt:
+            self.add_terrain(x, y, terrain_types[TerrainTypes.well])
 
-                self.add_terrain(grid_ref_x, grid_ref_y, terrain_types[TerrainTypes.well])
-
-                # Add effect
-                self.map.add_effect_circle(stand.x, stand.y, WATERED_EFFECT_R, 'water')
+            # Add effect
+            self.map.add_effect_circle(x, y, WATERED_EFFECT_R, 'water')
 
     def eat_grass(self, x, y):
         eat_sprite = self.map.get_sprite_at(x, y)

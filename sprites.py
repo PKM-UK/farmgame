@@ -109,7 +109,7 @@ class Player(pg.sprite.Sprite):
                 Bullet(self.game, vec(self.pos), dir)
 
         if keys[pg.K_d]:
-            self.game.task_dig_dirt(self.pos[0], self.pos[1])
+            self.game.task_dig_dirt()
 
 
         if keys[pg.K_t]:
