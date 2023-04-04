@@ -36,6 +36,7 @@ def draw_player_health(surf, x, y, health):
     pg.draw.rect(surf, col, fill_rect)
     pg.draw.rect(surf, WHITE, outline_rect, 2) # specified width = outline rect
 
+
 class Game:
     def __init__(self):
         pg.init()
@@ -58,7 +59,9 @@ class Game:
         self.last_z_sort_tick = self.last_effect_tick
 
         self.active_task = None
-
+        # These should be members of Task we get when needed?
+        self.task_continuing = False
+        self.task_progress = 0
 
     def load_data(self):
         # Load external stuff for game
@@ -147,6 +150,8 @@ class Game:
         sys.exit()
 
     def update(self):
+        # What are we waiting to see this tick?
+        self.task_continuing = False
         # update portion of the game loop
         self.all_sprites.update(self.gamestate)
         self.camera.update(self.player)
@@ -192,7 +197,11 @@ class Game:
         if now - self.last_z_sort_tick > self.z_sort_interval:
             self.sort_sprites()
 
-    def draw_tile_boundaries(self, tx, ty):
+        # End of update - close Tasks not updated this tick
+        if self.active_task is not None and self.task_continuing is False:
+            self.active_task = None
+
+    def draw_tile_boundaries(self, tx, ty, colour):
         # Isofy a tile, draw the resultant rhombus
         wrect = pg.Rect(tx*TILESIZE, ty*TILESIZE, TILESIZE*2 if self.gamestate["iso_mode"] else TILESIZE, TILESIZE)
         trect = self.camera.apply_rect(wrect)
@@ -200,12 +209,12 @@ class Game:
         if self.gamestate["iso_mode"]:
             # Connect middles of sides
             # midtop, midleft, midbottom, midright
-            pg.draw.line(self.screen, WHITE, trect.midtop, trect.midright, 2)
-            pg.draw.line(self.screen, WHITE, trect.midbottom, trect.midright, 2)
-            pg.draw.line(self.screen, WHITE, trect.midtop, trect.midleft, 2)
-            pg.draw.line(self.screen, WHITE, trect.midbottom, trect.midleft, 2)
+            pg.draw.line(self.screen, colour, trect.midtop, trect.midright, 2)
+            pg.draw.line(self.screen, colour, trect.midbottom, trect.midright, 2)
+            pg.draw.line(self.screen, colour, trect.midtop, trect.midleft, 2)
+            pg.draw.line(self.screen, colour, trect.midbottom, trect.midleft, 2)
         else:
-            pg.draw.rect(self.screen, WHITE, trect, 2)
+            pg.draw.rect(self.screen, colour, trect, 2)
 
 
 
@@ -247,6 +256,21 @@ class Game:
         pg.draw.line(self.screen, RED, pos_rect.topleft-vec(0,5), pos_rect.topleft+vec(0,5))
         pg.draw.line(self.screen, RED, pos_rect.topleft - vec(5, 0), pos_rect.topleft + vec(5, 0))
 
+    def draw_progress_indicator(self, x, y, progress):
+        BAR_LENGTH = 50
+        BAR_HEIGHT = 10
+        filled_length = progress * BAR_LENGTH
+
+        srect = self.camera.apply_rect(pg.Rect(x*TILESIZE, y*TILESIZE, 0, 0))
+        sx = srect.x
+        sy = srect.y
+
+        outline_rect = pg.Rect(sx-(BAR_LENGTH//2), sy-(TILESIZE//2), BAR_LENGTH, BAR_HEIGHT)
+        fill_rect = pg.Rect(sx-(BAR_LENGTH//2), sy-(TILESIZE//2), filled_length, BAR_HEIGHT)
+
+        pg.draw.rect(self.screen, WHITE, fill_rect)
+        pg.draw.rect(self.screen, WHITE, outline_rect, 2)  # specified width = outline rect
+
     def draw(self):
         pg.display.set_caption("{:.2f}".format(self.clock.get_fps()))
         self.screen.fill(BGCOLOR)
@@ -271,12 +295,17 @@ class Game:
         self.draw_pos_plus((self.player.pos))
 
 
-        # Cursor hovered tile
-        self.draw_tile_boundaries(self.hx, self.hy)
-
         # Draw cursor on hovered tile
-        draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
+        cursor_colour = BLUE
+        cursor_distance = (self.player.pos.x//TILESIZE - self.hx)**2 + (self.player.pos.y//TILESIZE - self.hy)**2
+        if (cursor_distance > PLAYER_INITIAL_REACH**2):
+            cursor_colour = RED
+        self.draw_tile_boundaries(self.hx, self.hy, cursor_colour)
 
+        # Draw UI
+        draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
+        if self.task_continuing:
+            self.draw_progress_indicator(self.hx, self.hy, self.task_progress)
         # self.draw_grid()
         # draw_player_heading(self.screen)
 
@@ -326,28 +355,27 @@ class Game:
         sprite.kill()
 
     # This should probably be generic and take dig_dirt as n argument
-    def task_dig_dirt(self, x, y):
+    def task_dig_dirt(self):
         if self.active_task is None:
-            self.active_task = Task(5, self.dig_dirt, x, y)
+            self.active_task = Task(2, self.dig_dirt, floor(self.hx), floor(self.hy))
+            self.task_continuing = True
         else:
             complete = self.active_task.update(self.dt)
+
             if complete:
                 self.active_task = None
+            else:
+                self.task_progress = self.active_task.progress / self.active_task.duration
+                self.task_continuing = True
 
-    def dig_dirt(self, world_x, world_y):
-        stands = self.tiles_standing_on(self.player, self.walls)
-        grid_ref_x = int((world_x + (TILESIZE / 2)) // TILESIZE)
-        grid_ref_y = int((world_y + (TILESIZE / 2)) // TILESIZE)
-        print(f"We'r at grid {grid_ref_x}, {grid_ref_y}")
-
-        for stand in stands:
-            print(f"{stand.pos.x}, {stand.pos.y}, {stand.terrain_type}")
-            if stand.pos.x // TILESIZE == grid_ref_x and stand.pos.y // TILESIZE == grid_ref_y and stand.terrain_type.name == TerrainTypes.dirt:
-
-                self.add_terrain(grid_ref_x, grid_ref_y, terrain_types[TerrainTypes.well])
-
-                # Add effect
-                self.map.add_effect_circle(grid_ref_x, grid_ref_y, WATERED_EFFECT_R, 'water')
+    # Targeting merge: make sure we use world/tile coords as appropriate
+    def dig_dirt(self, x, y):
+        target_sprite = self.map.get_sprite_at(x, y)
+        if target_sprite.terrain_type.name == TerrainTypes.dirt:
+            self.killing(target_sprite)
+            self.add_terrain(x, y, terrain_types[TerrainTypes.well])
+            # Add effect
+            self.map.add_effect_circle(x, y, WATERED_EFFECT_R, 'water')
 
     def eat_grass(self, x, y):
         eat_sprite = self.map.get_sprite_at(x, y)

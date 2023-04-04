@@ -109,7 +109,7 @@ class Player(pg.sprite.Sprite):
                 Bullet(self.game, vec(self.pos), dir)
 
         if keys[pg.K_d]:
-            self.game.task_dig_dirt(self.pos[0], self.pos[1])
+            self.game.task_dig_dirt()
 
 
     def update(self, gamestate):
@@ -129,6 +129,7 @@ class Player(pg.sprite.Sprite):
         collide_with_walls(self, self.game.walls, 'x')
         self.hit_rect.top = self.pos.y
         collide_with_walls(self, self.game.walls, 'y')
+
 
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, tile_x, tile_y):
