@@ -263,18 +263,6 @@ class Game:
         # self.draw_grid()
         # draw_player_heading(self.screen)
 
-
-
-
-        # Draw hitboxes
-        for sprite in self.mobs:
-            pg.draw.rect(self.screen, RED, self.camera.apply_rect(sprite.hit_rect), 2)
-            pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(sprite.rect), 2)
-
-        pg.draw.rect(self.screen, RED, self.camera.apply_rect(self.player.hit_rect), 2)
-        pg.draw.rect(self.screen, GREEN, self.camera.apply_rect(self.player.rect), 2)
-
-
         pg.display.flip()
 
     def change_mode(self):
