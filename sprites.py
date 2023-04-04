@@ -207,8 +207,8 @@ class Wall(pg.sprite.Sprite):
         self.hit_rect.topleft = self.pos
         self.rect = self.hit_rect
 
-        self.x = 42
-        self.y = 69
+        self.tile_x = tile_x
+        self.tile_y = tile_y
 
     def change_mode(self, gamestate):
         self.rect = self.iso_image.get_rect() if gamestate["iso_mode"] else self.image.get_rect()

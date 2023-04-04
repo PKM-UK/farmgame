@@ -59,13 +59,15 @@ class GrazerControlComponent(ControlComponent):
         self.target_square = None
         self.target_type = TerrainTypes.longgrass
         self.hunt_radius = GOAT_VISION_DISTACE
+        self.saw_food_tick = -1
         self.reached_food_tick = -1  # When did we get to the food?
+
 
     def get_control(self):
         now = pg.time.get_ticks()
 
         if self.reached_food_tick > 0 and now - self.reached_food_tick > GOAT_EAT_TIME:
-            self.game.eat_grass(self.target_square.x, self.target_square.y)
+            self.game.eat_grass(self.target_square.tile_x, self.target_square.tile_y)
             self.target_square = None
             self.reached_food_tick = -1
 
@@ -82,10 +84,11 @@ class GrazerControlComponent(ControlComponent):
 
                 # Filter to only longgrass tiles and sort by Manhattan distance
                 target_tiles = list(filter(lambda tile: tile.terrain_type.name == TerrainTypes.longgrass, tiles))
-                target_tiles.sort(key=lambda tile: (tile.x-self.mob.x) + (tile.y-self.mob.y))
+                target_tiles.sort(key=lambda tile: (tile.pos - self.mob.pos).magnitude())
 
                 if len(target_tiles) > 0:
                     self.target_square = target_tiles[0]
+                    self.saw_food_tick = now
                 else:
                     # Random amble
                     self.target_square = None
@@ -94,17 +97,25 @@ class GrazerControlComponent(ControlComponent):
 
         if self.target_square is not None:
             # Now we have a target square, calculate vector to it
-            target_pos = vec(self.target_square.x, self.target_square.y) * TILESIZE
-            target_vec = (target_pos - self.mob.pos)
+            target_vec = (self.target_square.pos - self.mob.pos)
 
             if target_vec.magnitude() < (TILESIZE//2):
                 # Within one square of target, stop and munch
                 self.vel = vec(0, 0)
                 if self.reached_food_tick < 0:
                     self.reached_food_tick = now
+                    self.saw_food_tick = -1
             else:
                 self.vel = target_vec.normalize() * self.speed
                 self.rot = self.vel.angle_to(vec(1, 0))
+
+            if self.saw_food_tick > 0 and now - self.saw_food_tick > GOAT_TENACITY:
+                # We've been hunting this food tile for ages, forget it
+                print('Forget about it')
+                self.target_square = None
+                self.rot = int(uniform(-179.0, 179.0))
+                self.vel = vec(self.speed * 0.5, 0).rotate(self.rot)
+                self.tick = now  # Amble for another attention span
 
         return self.rot, self.vel
 
