@@ -201,7 +201,7 @@ class Game:
         if self.active_task is not None and self.task_continuing is False:
             self.active_task = None
 
-    def draw_tile_boundaries(self, tx, ty):
+    def draw_tile_boundaries(self, tx, ty, colour):
         # Isofy a tile, draw the resultant rhombus
         wrect = pg.Rect(tx*TILESIZE, ty*TILESIZE, TILESIZE*2 if self.gamestate["iso_mode"] else TILESIZE, TILESIZE)
         trect = self.camera.apply_rect(wrect)
@@ -209,12 +209,12 @@ class Game:
         if self.gamestate["iso_mode"]:
             # Connect middles of sides
             # midtop, midleft, midbottom, midright
-            pg.draw.line(self.screen, WHITE, trect.midtop, trect.midright, 2)
-            pg.draw.line(self.screen, WHITE, trect.midbottom, trect.midright, 2)
-            pg.draw.line(self.screen, WHITE, trect.midtop, trect.midleft, 2)
-            pg.draw.line(self.screen, WHITE, trect.midbottom, trect.midleft, 2)
+            pg.draw.line(self.screen, colour, trect.midtop, trect.midright, 2)
+            pg.draw.line(self.screen, colour, trect.midbottom, trect.midright, 2)
+            pg.draw.line(self.screen, colour, trect.midtop, trect.midleft, 2)
+            pg.draw.line(self.screen, colour, trect.midbottom, trect.midleft, 2)
         else:
-            pg.draw.rect(self.screen, WHITE, trect, 2)
+            pg.draw.rect(self.screen, colour, trect, 2)
 
 
 
@@ -278,10 +278,14 @@ class Game:
 
         self.screen.blit(self.player.iso_image if self.gamestate["iso_mode"] else self.player.image, self.camera.apply(self.player))
 
-        # Cursor hovered tile
-        self.draw_tile_boundaries(self.hx, self.hy)
-
         # Draw cursor on hovered tile
+        cursor_colour = BLUE
+        cursor_distance = (self.player.x//TILESIZE - self.hx)**2 + (self.player.y//TILESIZE - self.hy)**2
+        if (cursor_distance > PLAYER_INITIAL_REACH**2):
+            cursor_colour = RED
+        self.draw_tile_boundaries(self.hx, self.hy, cursor_colour)
+
+        # Draw UI
         draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
         if self.task_continuing:
             self.draw_progress_indicator(self.hx, self.hy, self.task_progress)

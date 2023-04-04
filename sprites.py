@@ -74,6 +74,8 @@ class Player(pg.sprite.Sprite):
         self.hit_rect.center = self.rect.center
         self.vel = vec(0, 0)
         self.pos = vec(x, y) * TILESIZE
+        self.x = x
+        self.y = y
         self.rot = 0
         self.speed = 0
         self.last_shot = 0
@@ -134,6 +136,10 @@ class Player(pg.sprite.Sprite):
         collide_with_walls(self, self.game.walls, 'x')
         self.hit_rect.top = self.pos.y
         collide_with_walls(self, self.game.walls, 'y')
+
+        # I know, DRY, but this makes the whole iso thing easier
+        self.x = self.pos.x
+        self.y = self.pos.y
 
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
