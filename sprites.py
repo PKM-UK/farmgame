@@ -61,11 +61,11 @@ def collide_with_walls(sprite, group, dirr):
 
 
 class Player(pg.sprite.Sprite):
-    def __init__(self, game, x, y):
+    def __init__(self, game, tile_x, tile_y):
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        # self.image = pg.Surface((TILESIZE, TILESIZE))
+
         self.image = self.game.player_img
         self.iso_image = self.image
 
@@ -73,7 +73,7 @@ class Player(pg.sprite.Sprite):
         self.hit_rect = PLAYER_HIT_RECT # this is the "physics object" - move this, draw the sprite rect
         self.hit_rect.center = self.rect.center
         self.vel = vec(0, 0)
-        self.pos = vec(x, y) * TILESIZE
+        self.pos = vec(tile_x, tile_y) * TILESIZE
         self.rot = 0
         self.speed = 0
         self.last_shot = 0
@@ -112,10 +112,6 @@ class Player(pg.sprite.Sprite):
             self.game.task_dig_dirt(self.pos[0], self.pos[1])
 
 
-        if keys[pg.K_t]:
-            tiles_standing_on(self, self.game.walls)
-            print(f"{self.x}, {self.y}")
-
     def update(self, gamestate):
         self.get_keys()
 
@@ -129,14 +125,13 @@ class Player(pg.sprite.Sprite):
 
         self.pos += self.vel * self.game.dt
         self.hit_rect.left = self.pos.x
-
         # print(f"Rect at {self.rect.topleft} is {self.rect.width} wide, hitrect {self.hit_rect.topleft} is {self.hit_rect.width}")
         collide_with_walls(self, self.game.walls, 'x')
         self.hit_rect.top = self.pos.y
         collide_with_walls(self, self.game.walls, 'y')
 
 class Mob(pg.sprite.Sprite):
-    def __init__(self, game, x, y):
+    def __init__(self, game, tile_x, tile_y):
         self.groups = game.all_sprites, game.mobs
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -145,9 +140,7 @@ class Mob(pg.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.hit_rect = MOB_HIT_RECT.copy()
-        self.x = x
-        self.y = y
-        self.pos = vec(x, y) * TILESIZE
+        self.pos = vec(tile_x, tile_y) * TILESIZE
         self.rect.center = self.pos
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
@@ -170,15 +163,11 @@ class Mob(pg.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
-        self.hit_rect.centerx = self.pos.x
+        self.hit_rect.left = self.pos.x
         collide_with_walls(self, self.game.walls, 'x')
-        self.hit_rect.centery = self.pos.y
+        self.hit_rect.top = self.pos.y
         collide_with_walls(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
-
-        # I know, DRY, but this makes the whole iso thing easier
-        self.x = self.pos.x
-        self.y = self.pos.y
 
         # COMBAT
         if self.health < 0:
@@ -197,7 +186,7 @@ class Mob(pg.sprite.Sprite):
             pg.draw.rect(self.image, col, self.health_bar)
 
 class Wall(pg.sprite.Sprite):
-    def __init__(self, game, x, y, terrain_type, anim_frame=0):
+    def __init__(self, game, tile_x, tile_y, terrain_type, anim_frame=0):
         if len(terrain_type.iso_images) > 1:
             self.groups = game.all_sprites, game.walls, game.animated
         else:
@@ -206,23 +195,24 @@ class Wall(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
 
-        self.x = x
-        self.y = y
         self.terrain_type = terrain_type
         self.is_obstacle = self.terrain_type.obstacle
         self.anim_frame = anim_frame
 
+        self.pos = vec(tile_x, tile_y) * TILESIZE
         self.image = self.terrain_type.img
         self.iso_image = self.terrain_type.iso_images[self.anim_frame]
         self.hit_rect = self.image.get_rect()
-        self.hit_rect.x = x * TILESIZE
-        self.hit_rect.y = y * TILESIZE
+        self.hit_rect.topleft = self.pos
         self.rect = self.hit_rect
+
+        self.x = 42
+        self.y = 69
 
     def change_mode(self, gamestate):
         self.rect = self.iso_image.get_rect() if gamestate["iso_mode"] else self.image.get_rect()
-        self.rect.x = self.x * TILESIZE
-        self.rect.y = self.y * TILESIZE
+        self.rect.x = self.pos.x
+        self.rect.y = self.pos.y
 
     def animate_tick(self):
         self.anim_frame = self.anim_frame + 1

@@ -69,7 +69,7 @@ class Game:
         self.map = Map(path.join(game_folder, "map.txt"))
         self.player_img = pg.image.load(path.join(img_folder, PLAYER_IMG)).convert_alpha()
         self.iso_player_img = pg.image.load(path.join(img_folder, ISO_PLAYER_IMG)).convert_alpha()
-        self.iso_player_img = pg.transform.scale(self.iso_player_img, (TILESIZE * 2, floor((self.iso_player_img.get_rect().height / self.iso_player_img.get_rect().width) * TILESIZE * 2)))
+        # self.iso_player_img = pg.transform.scale(self.iso_player_img, (TILESIZE * 2, floor((self.iso_player_img.get_rect().height / self.iso_player_img.get_rect().width) * TILESIZE * 2)))
         self.mob_img = pg.image.load(path.join(img_folder, MOB_IMG)).convert_alpha()
 
         for tkey in terrain_types.keys():
@@ -110,7 +110,7 @@ class Game:
                 if tile == 'z':
                     mob_sprite = Mob(self, col, row)
                     mob_sprite.ImageComponent = GoatImageComponent(self, mob_sprite)
-                    mob_sprite.ControlComponent = GrazerControlComponent(self, mob_sprite)
+                    mob_sprite.ControlComponent = HunterControlComponent(self, mob_sprite)
                     self.ordered_sprites.append(mob_sprite)
 
                     tile = '.'   # Dirty hax to put dirt under mobs
@@ -119,7 +119,7 @@ class Game:
                 self.map.add_sprite(col, row, wall_sprite)
                 self.ordered_sprites.append(wall_sprite)
 
-        self.player = Player(self, 6, 1)
+        self.player = Player(self, 0, 0)
 
         # Now sort walls by Z
         self.sort_sprites()
@@ -237,6 +237,16 @@ class Game:
 
                 pg.draw.line(self.screen, RED, (iso_gridpoint.left, iso_gridpoint.top),(iso_gridpoint.right, iso_gridpoint.bottom))
 
+    def draw_pos_cross(self, pos):
+        pos_rect = self.camera.apply_rect(pg.Rect(pos[0], pos[1], 0, 0))
+        pg.draw.line(self.screen, WHITE, pos_rect.topleft-vec(5,5), pos_rect.topleft+vec(5,5))
+        pg.draw.line(self.screen, WHITE, pos_rect.topleft - vec(-5, 5), pos_rect.topleft + vec(-5, 5))
+
+    def draw_pos_plus(self, pos):
+        pos_rect = self.camera.apply_rect(pg.Rect(pos[0], pos[1], 0, 0))
+        pg.draw.line(self.screen, RED, pos_rect.topleft-vec(0,5), pos_rect.topleft+vec(0,5))
+        pg.draw.line(self.screen, RED, pos_rect.topleft - vec(5, 0), pos_rect.topleft + vec(5, 0))
+
     def draw(self):
         pg.display.set_caption("{:.2f}".format(self.clock.get_fps()))
         self.screen.fill(BGCOLOR)
@@ -249,10 +259,17 @@ class Game:
 
             self.screen.blit(sprite.iso_image if self.gamestate["iso_mode"] else sprite.image, self.camera.apply(sprite))
 
-            if self.gamestate.get("debug_draw"):
+
+        if self.gamestate.get("debug_draw"):
+            for sprite in self.ordered_sprites:
+                self.draw_pos_cross(sprite.rect.topleft)
+                self.draw_pos_plus((sprite.pos))
                 pg.draw.rect(self.screen, BLUE, self.camera.apply(sprite), 1)
 
         self.screen.blit(self.player.iso_image if self.gamestate["iso_mode"] else self.player.image, self.camera.apply(self.player))
+        self.draw_pos_cross(self.player.rect.topleft)
+        self.draw_pos_plus((self.player.pos))
+
 
         # Cursor hovered tile
         self.draw_tile_boundaries(self.hx, self.hy)
@@ -302,7 +319,7 @@ class Game:
         self.map.add_sprite(col, row, wall_sprite)
 
     def sort_sprites(self):
-        self.ordered_sprites.sort(key=lambda s: s.x + s.y)
+        self.ordered_sprites.sort(key=lambda s: s.pos.x + s.pos.y + (TILESIZE if isinstance(s, Mob) else 0))
 
     def killing(self, sprite):
         self.ordered_sprites.remove(sprite)
@@ -317,20 +334,20 @@ class Game:
             if complete:
                 self.active_task = None
 
-    def dig_dirt(self, x, y):
+    def dig_dirt(self, world_x, world_y):
         stands = self.tiles_standing_on(self.player, self.walls)
-        grid_ref_x = int((x + (TILESIZE / 2)) // TILESIZE)
-        grid_ref_y = int((y + (TILESIZE / 2)) // TILESIZE)
+        grid_ref_x = int((world_x + (TILESIZE / 2)) // TILESIZE)
+        grid_ref_y = int((world_y + (TILESIZE / 2)) // TILESIZE)
         print(f"We'r at grid {grid_ref_x}, {grid_ref_y}")
 
         for stand in stands:
-            print(f"{stand.x}, {stand.y}, {stand.terrain_type}")
-            if stand.x == grid_ref_x and stand.y == grid_ref_y and stand.terrain_type.name == TerrainTypes.dirt:
+            print(f"{stand.pos.x}, {stand.pos.y}, {stand.terrain_type}")
+            if stand.pos.x // TILESIZE == grid_ref_x and stand.pos.y // TILESIZE == grid_ref_y and stand.terrain_type.name == TerrainTypes.dirt:
 
                 self.add_terrain(grid_ref_x, grid_ref_y, terrain_types[TerrainTypes.well])
 
                 # Add effect
-                self.map.add_effect_circle(stand.x, stand.y, WATERED_EFFECT_R, 'water')
+                self.map.add_effect_circle(grid_ref_x, grid_ref_y, WATERED_EFFECT_R, 'water')
 
     def eat_grass(self, x, y):
         eat_sprite = self.map.get_sprite_at(x, y)

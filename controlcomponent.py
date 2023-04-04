@@ -74,8 +74,8 @@ class GrazerControlComponent(ControlComponent):
                 self.tick = now
                 # Find a food square
                 # Look in local 9x9 square
-                cx = int(self.mob.x // TILESIZE)
-                cy = int(self.mob.y // TILESIZE)
+                cx = int(self.mob.pos.x // TILESIZE)
+                cy = int(self.mob.pos.y // TILESIZE)
 
                 # Ask the map for a list of sprites within our hunt radius
                 tiles = self.game.map.get_tile_circle(cx, cy, self.hunt_radius, 'terrain')
