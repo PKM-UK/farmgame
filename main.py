@@ -13,10 +13,11 @@ from animator import *
 from terrain import *
 from effect import *
 from task import *
+from dialog import *
 from os import path
 from math import fmod, floor
 
-def draw_player_health(surf, x, y, health):
+def draw_player_mp(surf, x, y, health):
     health = max(health, 0)
 
     BAR_LENGTH = 100
@@ -47,6 +48,7 @@ class Game:
 
         self.terrain_images = {}
         self.terrain_iso_images = {}
+        self.img_folder = ''
         self.load_data()
 
         self.gamestate = {}
@@ -58,41 +60,51 @@ class Game:
         self.last_effect_tick = pg.time.get_ticks()
         self.last_z_sort_tick = self.last_effect_tick
 
+        # Should this all belong to Player?
         self.active_task = None
         # These should be members of Task we get when needed?
         self.task_continuing = False
         self.task_progress = 0
 
+        self.active_dialog = None
+        self.dialogs = {'spells': Dialog(100, 50, 400, 300, self.screen, self)}
+
+    def show_dialog(self, name):
+        if name is not None and self.active_dialog != self.dialogs[name]:
+            self.active_dialog = self.dialogs[name]
+        else:
+            self.active_dialog = None
+
     def load_data(self):
         # Load external stuff for game
         game_folder = path.dirname(__file__)
-        img_folder = path.join(game_folder, "img")
+        self.img_folder = path.join(game_folder, "img")
 
         print('Initing Map')
         self.map = Map(path.join(game_folder, "map.txt"))
-        self.player_img = pg.image.load(path.join(img_folder, PLAYER_IMG)).convert_alpha()
-        self.iso_player_img = pg.image.load(path.join(img_folder, ISO_PLAYER_IMG)).convert_alpha()
+        self.player_img = pg.image.load(path.join(self.img_folder, PLAYER_IMG)).convert_alpha()
+        self.iso_player_img = pg.image.load(path.join(self.img_folder, ISO_PLAYER_IMG)).convert_alpha()
         # self.iso_player_img = pg.transform.scale(self.iso_player_img, (TILESIZE * 2, floor((self.iso_player_img.get_rect().height / self.iso_player_img.get_rect().width) * TILESIZE * 2)))
-        self.mob_img = pg.image.load(path.join(img_folder, MOB_IMG)).convert_alpha()
+        self.mob_img = pg.image.load(path.join(self.img_folder, MOB_IMG)).convert_alpha()
 
         for tkey in terrain_types.keys():
             ttype = terrain_types[tkey]
             # name from ttype
             tname = ttype.name
             # load and transform, put in appropriate map
-            img = pg.image.load(path.join(img_folder, ttype.tile)).convert_alpha()
+            img = pg.image.load(path.join(self.img_folder, ttype.tile)).convert_alpha()
             img = pg.transform.scale(img, (TILESIZE, TILESIZE))
             # self.terrain_images[tname] = img
             terrain_types[tkey].img = img
 
             for isotilepath in ttype.isotiles:
-                iso_img = pg.image.load(path.join(img_folder, isotilepath)).convert_alpha()
+                iso_img = pg.image.load(path.join(self.img_folder, isotilepath)).convert_alpha()
                 iso_img = pg.transform.scale(iso_img, (TILESIZE * 2, floor(
                     (iso_img.get_rect().height / iso_img.get_rect().width) * TILESIZE * 2)))
                 # self.terrain_iso_images[tname] = iso_img
                 terrain_types[tkey].iso_images.append(iso_img)
 
-        self.bullet_img = pg.image.load(path.join(img_folder, BULLET_IMG)).convert_alpha()
+        self.bullet_img = pg.image.load(path.join(self.img_folder, BULLET_IMG)).convert_alpha()
 
         pass
 
@@ -162,7 +174,7 @@ class Game:
         # Mobs hit player
         hits = pg.sprite.spritecollide(self.player, self.mobs, False, collide_hit_rect)
         for hit in hits:
-            self.player.health -= MOB_DAMAGE
+            self.player.mp -= MOB_DAMAGE
             recoilvect = vec(MOB_RECOIL,0).rotate(180-hit.rot)
             hit.vel += recoilvect
 
@@ -271,6 +283,27 @@ class Game:
         pg.draw.rect(self.screen, WHITE, fill_rect)
         pg.draw.rect(self.screen, WHITE, outline_rect, 2)  # specified width = outline rect
 
+    def draw_game_ui(self):
+        # Draw cursor on hovered tile
+        cursor_colour = RED
+        if (self.can_do_task()):
+            cursor_colour = BLUE
+        self.draw_tile_boundaries(self.hx, self.hy, cursor_colour)
+
+        # Draw UI
+        draw_player_mp(self.screen, 10, 10, self.player.mp / self.player.max_mp)
+
+        
+
+        if self.task_continuing:
+            self.draw_progress_indicator(self.hx, self.hy, self.task_progress)
+        # self.draw_grid()
+        # draw_player_heading(self.screen)
+
+    def draw_dialog_ui(self):
+        if self.active_dialog is not None:
+            self.active_dialog.draw()
+
     def draw(self):
         pg.display.set_caption("{:.2f}".format(self.clock.get_fps()))
         self.screen.fill(BGCOLOR)
@@ -291,25 +324,17 @@ class Game:
                 pg.draw.rect(self.screen, BLUE, self.camera.apply(sprite), 1)
 
         self.screen.blit(self.player.iso_image if self.gamestate["iso_mode"] else self.player.image, self.camera.apply(self.player))
-        self.draw_pos_cross(self.player.rect.topleft)
-        self.draw_pos_plus((self.player.pos))
 
+        self.draw_game_ui()
 
-        # Draw cursor on hovered tile
-        cursor_colour = BLUE
-        cursor_distance = (self.player.pos.x//TILESIZE - self.hx)**2 + (self.player.pos.y//TILESIZE - self.hy)**2
-        if (cursor_distance > PLAYER_INITIAL_REACH**2):
-            cursor_colour = RED
-        self.draw_tile_boundaries(self.hx, self.hy, cursor_colour)
-
-        # Draw UI
-        draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
-        if self.task_continuing:
-            self.draw_progress_indicator(self.hx, self.hy, self.task_progress)
-        # self.draw_grid()
-        # draw_player_heading(self.screen)
+        self.draw_dialog_ui()
 
         pg.display.flip()
+
+    def can_do_task(self):
+        cursor_distance = (self.player.pos.x // TILESIZE - self.hx) ** 2 + (
+                    self.player.pos.y // TILESIZE - self.hy) ** 2
+        return cursor_distance <= PLAYER_INITIAL_REACH**2
 
     def change_mode(self):
         self.gamestate["iso_mode"] = not self.gamestate["iso_mode"]
@@ -325,6 +350,8 @@ class Game:
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
                     self.quit()
+                elif event.key == pg.K_TAB:
+                    self.show_dialog('spells')
                 elif event.key == pg.K_i:
                     self.change_mode()
 
@@ -354,19 +381,20 @@ class Game:
         self.ordered_sprites.remove(sprite)
         sprite.kill()
 
-    # This should probably be generic and take dig_dirt as n argument
-    def task_dig_dirt(self):
-        if self.active_task is None:
-            self.active_task = Task(2, self.dig_dirt, floor(self.hx), floor(self.hy))
-            self.task_continuing = True
-        else:
-            complete = self.active_task.update(self.dt)
-
-            if complete:
-                self.active_task = None
-            else:
-                self.task_progress = self.active_task.progress / self.active_task.duration
+    # I should make the Task ahead of time with its duration, completion function and "can do this?" callback
+    def do_task(self, func, duration):
+        if self.can_do_task():
+            if self.active_task is None:
+                self.active_task = Task(duration, func, floor(self.hx), floor(self.hy))
                 self.task_continuing = True
+            else:
+                complete = self.active_task.update(self.dt)
+
+                if complete:
+                    self.active_task = None
+                else:
+                    self.task_progress = self.active_task.progress / self.active_task.duration
+                    self.task_continuing = True
 
     # Targeting merge: make sure we use world/tile coords as appropriate
     def dig_dirt(self, x, y):

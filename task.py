@@ -13,6 +13,4 @@ class Task():
             self.completion(*(self.callbackargs))
             return True
         else:
-            #Just for testing - return False really
-            print(f"Task is {self.progress / self.duration} complete")
             return False

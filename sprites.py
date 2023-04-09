@@ -77,11 +77,19 @@ class Player(pg.sprite.Sprite):
         self.rot = 0
         self.speed = 0
         self.last_shot = 0
-        self.health = PLAYER_HEALTH
+        self.max_mp = PLAYER_MP
+        self.mp = self.max_mp
+
+        # Select with UI
+        self.active_ability = self.game.dig_dirt
+        self.active_ability_duration = 2
 
     def get_keys(self):
         self.vel = vec(0, 0)
         self.rot_speed = 0
+
+        # This function is for key control of the player
+        # Key press events for game stuff (dialogs etc.) goes in game.events()
 
         keys = pg.key.get_pressed()
         if keys[pg.K_LEFT]:
@@ -98,18 +106,11 @@ class Player(pg.sprite.Sprite):
         self.vel = vec(self.speed, 0).rotate(-self.rot)
 
         if keys[pg.K_SPACE]:
-            now = pg.time.get_ticks()
-            if now > self.last_shot + BULLET_RATE:
-                self.last_shot = now
+            self.game.do_task(self.active_ability, self.active_ability_duration)
 
-                # More spread when moving
-                spread = uniform(-GUN_SPREAD, GUN_SPREAD) * (self.speed / PLAYER_SPEED)
 
-                dir = vec(1,0).rotate(-self.rot + spread)
-                Bullet(self.game, vec(self.pos), dir)
 
-        if keys[pg.K_d]:
-            self.game.task_dig_dirt()
+
 
 
     def update(self, gamestate):
