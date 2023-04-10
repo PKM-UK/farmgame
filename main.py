@@ -69,6 +69,9 @@ class Game:
         self.active_dialog = None
         self.dialogs = {'spells': Dialog(100, 50, 400, 300, self.screen, self)}
 
+        self.spells = {'bolt': (self.magic_missile, 0.5),
+                       'well': (self.dig_dirt, 2)}
+
     def show_dialog(self, name):
         if name is not None and self.active_dialog != self.dialogs[name]:
             self.active_dialog = self.dialogs[name]
@@ -105,6 +108,7 @@ class Game:
                 terrain_types[tkey].iso_images.append(iso_img)
 
         self.bullet_img = pg.image.load(path.join(self.img_folder, BULLET_IMG)).convert_alpha()
+        self.iso_bullet_img = pg.image.load(path.join(self.img_folder, ISO_BULLET_IMG)).convert_alpha()
 
         pass
 
@@ -129,12 +133,16 @@ class Game:
                     self.ordered_sprites.append(mob_sprite)
 
                     tile = '.'   # Dirty hax to put dirt under mobs
+                elif tile == 'p':
+                    self.player = Player(self, col, row)
+                    tile = '.'
+
                 terrain_type = map_char_mapping[tile]
                 wall_sprite = Wall(self, col, row, terrain_type)
                 self.map.add_sprite(col, row, wall_sprite)
                 self.ordered_sprites.append(wall_sprite)
 
-        self.player = Player(self, 0, 0)
+
 
         # Now sort walls by Z
         self.sort_sprites()
@@ -169,7 +177,7 @@ class Game:
         self.camera.update(self.player)
 
         # Mouse input
-        (self.hx, self.hy) = self.camera.get_hovered_tile(pg.mouse.get_pos())
+        self.mouse_hover()
 
         # Mobs hit player
         hits = pg.sprite.spritecollide(self.player, self.mobs, False, collide_hit_rect)
@@ -212,6 +220,19 @@ class Game:
         # End of update - close Tasks not updated this tick
         if self.active_task is not None and self.task_continuing is False:
             self.active_task = None
+
+    def mouse_hover(self):
+        # Highlight game elements if no dialog
+        # Highlight buttons if dialog
+        if self.active_dialog is None:
+            (self.hx, self.hy) = self.camera.get_hovered_tile(pg.mouse.get_pos())
+        else:
+            self.active_dialog.hover(pg.mouse.get_pos())
+
+    def mouse_click(self):
+        clickpos = pg.mouse.get_pos()
+        if self.active_dialog is not None:
+            self.active_dialog.mouse_click(clickpos)
 
     def draw_tile_boundaries(self, tx, ty, colour):
         # Isofy a tile, draw the resultant rhombus
@@ -354,6 +375,9 @@ class Game:
                     self.show_dialog('spells')
                 elif event.key == pg.K_i:
                     self.change_mode()
+            if event.type == pg.MOUSEBUTTONDOWN:
+                self.mouse_click()
+
 
 
     def show_start_screen(self):
@@ -375,7 +399,7 @@ class Game:
         self.map.add_sprite(col, row, wall_sprite)
 
     def sort_sprites(self):
-        self.ordered_sprites.sort(key=lambda s: s.pos.x + s.pos.y + (TILESIZE if isinstance(s, Mob) else 0))
+        self.ordered_sprites.sort(key=lambda s: s.pos.x + s.pos.y + (TILESIZE if isinstance(s, Mob) or isinstance(s, Bullet) else 0))
 
     def killing(self, sprite):
         self.ordered_sprites.remove(sprite)
@@ -410,6 +434,16 @@ class Game:
         if eat_sprite.terrain_type.name == TerrainTypes.longgrass:
             self.killing(eat_sprite)
             self.add_terrain(x, y, terrain_types[TerrainTypes.shortgrass])
+
+    def magic_missile(self, x, y):
+        target_pos = vec((x + 0.5) * TILESIZE, (y + 0.5) * TILESIZE)
+        target_vec_dir = (target_pos - self.player.pos).normalize()
+        print(f"Pew! {x}, {y}")
+        missile = Bullet(self, vec(self.player.pos), target_vec_dir)
+        self.ordered_sprites.append(missile)
+
+    def set_spell(self, name):
+        self.player.set_spell(*self.spells[name])
 
 
 

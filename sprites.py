@@ -81,8 +81,8 @@ class Player(pg.sprite.Sprite):
         self.mp = self.max_mp
 
         # Select with UI
-        self.active_ability = self.game.dig_dirt
-        self.active_ability_duration = 2
+        self.active_ability = self.game.magic_missile
+        self.active_ability_duration = 0.5
 
     def get_keys(self):
         self.vel = vec(0, 0)
@@ -110,7 +110,9 @@ class Player(pg.sprite.Sprite):
 
 
 
-
+    def set_spell(self, activity, duration):
+        self.active_ability = activity
+        self.active_ability_duration = duration
 
 
     def update(self, gamestate):
@@ -123,6 +125,9 @@ class Player(pg.sprite.Sprite):
         self.rect = self.iso_image.get_rect() if gamestate["iso_mode"] else self.hit_rect
 
         self.rect.topleft = self.pos
+
+        if self.vel.magnitude() > 1:
+            print(f"Flying away! vel vec {self.vel}")
 
         self.pos += self.vel * self.game.dt
         self.hit_rect.left = self.pos.x
@@ -229,6 +234,7 @@ class Bullet(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = pg.transform.rotate(self.game.bullet_img,  dir.angle_to(vec(1, 0)))
+        self.iso_image = self.game.iso_bullet_img
         self.rect = self.image.get_rect()
 
         self.pos = pos
@@ -242,5 +248,5 @@ class Bullet(pg.sprite.Sprite):
         self.rect.center = self.pos
         if pg.time.get_ticks() > self.spawn_time + BULLET_LIFETIME:
             self.kill()
-        if pg.sprite.spritecollideany(self, self.game.walls):
-            self.kill()
+        #if pg.sprite.spritecollideany(self, self.game.walls):
+        #    self.kill()
