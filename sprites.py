@@ -1,19 +1,16 @@
 import pygame as pg
 from settings import *
 from terrain import *
+from item import *
 from map import collide_hit_rect
 from random import uniform
-from enum import Enum
+from math import sin
+
 vec = pg.math.Vector2
+from math import floor
 
 # TerrainTypes = Enum('TerrainTypes', ['dirt', 'shortgrass', 'longgrass', 'wall', 'well'])
-class TerrainTypes(Enum):
-    dirt = 1
-    shortgrass = 2
-    longgrass = 3
-    tree = 4
-    wall = 5
-    well = 6
+
 
 
 terrain_types = {
@@ -31,6 +28,11 @@ map_char_mapping = {
     "t": terrain_types[TerrainTypes.tree],
     "w": terrain_types[TerrainTypes.wall],
     "W": terrain_types[TerrainTypes.well]
+}
+
+item_types = {
+    ItemTypes.grass: Item(ItemTypes.grass, 'grassItem.png'),
+    ItemTypes.pie: Item(ItemTypes.pie, 'pieItem.png')
 }
 
 
@@ -250,3 +252,33 @@ class Bullet(pg.sprite.Sprite):
             self.kill()
         #if pg.sprite.spritecollideany(self, self.game.walls):
         #    self.kill()
+
+class Item(pg.sprite.Sprite):
+    def __init__(self, game, tile_x, tile_y, item_type):
+        self.game = game
+        self.pos = vec(tile_x, tile_y) * TILESIZE
+        self.item_type = item_type
+
+        self.groups = game.all_sprites, game.items
+
+        pg.sprite.Sprite.__init__(self, self.groups)
+
+        # Image/rect boilerplate
+        self.image = self.item_type.image
+        self.iso_image = self.image
+        self.rect = self.image.get_rect()
+        self.hit_rect = self.rect
+
+        self.bob_tick = uniform(0.0, 1.0)
+
+    def update(self, gamestate):
+        self.bob_tick = self.bob_tick + self.game.dt
+        bob = sin(self.bob_tick * 6.3) * ITEM_BOB_AMOUNT
+        if gamestate["iso_mode"]:
+            self.rect.topleft = self.pos + vec(bob, bob)
+        else:
+            self.rect.topleft = self.pos + vec(0, bob)
+
+    def pickup(self):
+        self.game.add_inv(self.item_type, 1)
+        self.game.killing(self)

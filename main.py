@@ -107,6 +107,12 @@ class Game:
                 # self.terrain_iso_images[tname] = iso_img
                 terrain_types[tkey].iso_images.append(iso_img)
 
+        for ikey in item_types.keys():
+            itype = item_types[ikey]
+            image = pg.image.load(path.join(self.img_folder, itype.image_path)).convert_alpha()
+            # self.terrain_images[tname] = img
+            item_types[ikey].image = image
+
         self.bullet_img = pg.image.load(path.join(self.img_folder, BULLET_IMG)).convert_alpha()
         self.iso_bullet_img = pg.image.load(path.join(self.img_folder, ISO_BULLET_IMG)).convert_alpha()
 
@@ -121,6 +127,7 @@ class Game:
         self.mobs = pg.sprite.Group()
         self.bullets = pg.sprite.Group()
         self.animated = pg.sprite.Group()
+        self.items = pg.sprite.Group()
 
         # Give us row index and line of file
         print('Adding sprites')
@@ -142,7 +149,13 @@ class Game:
                 self.map.add_sprite(col, row, wall_sprite)
                 self.ordered_sprites.append(wall_sprite)
 
-
+        # Debug: add some items
+        for p in range(3):
+            pie = Item(self, p+2, 2, item_types[ItemTypes.pie])
+            self.ordered_sprites.append(pie)
+        for p in range(3):
+            pie = Item(self, p+2, 4, item_types[ItemTypes.grass])
+            self.ordered_sprites.append(pie)
 
         # Now sort walls by Z
         self.sort_sprites()
