@@ -67,13 +67,13 @@ class Game:
         self.task_progress = 0
 
         self.active_dialog = None
-        self.dialogs = {'spells': Dialog(100, 50, 400, 300, self.screen, self)}
 
-        self.spells = {'bolt': (self.magic_missile, 0.5),
-                       'well': (self.dig_dirt, 2)}
+        self.dialogs = {}
+        self.spells = {}
 
     def show_dialog(self, name):
         if name is not None and self.active_dialog != self.dialogs[name]:
+            self.dialogs[name].update()
             self.active_dialog = self.dialogs[name]
         else:
             self.active_dialog = None
@@ -166,6 +166,12 @@ class Game:
 
         self.effects = {'water': WateredEffect(self, 'water', WATERED_EFFECT_P)}
 
+        # Set up UI now we have player etc.
+        self.dialogs = {'spells': SpellDialog(100, 50, 400, 300, self.screen, self),
+                        'inventory': InventoryDialog(100, 50, 400, 300, self.screen, self)}
+
+        self.spells = {'bolt': (self.magic_missile, 0.5),
+                       'well': (self.dig_dirt, 2)}
 
         self.change_mode()
 
@@ -207,6 +213,11 @@ class Game:
         for hit in hits:
             hit.vel += hits[hit][0].vel * 0.05
             hit.health -= BULLET_DMG
+
+        # Player picks up item
+        hits = pg.sprite.spritecollide(self.player, self.items, False, collide_hit_rect)
+        for hit in hits:
+            hit.pickup()
 
         # Do things that tick
         self.anim.tick()
@@ -386,6 +397,8 @@ class Game:
                     self.quit()
                 elif event.key == pg.K_TAB:
                     self.show_dialog('spells')
+                elif event.key == pg.K_e:
+                    self.show_dialog('inventory')
                 elif event.key == pg.K_i:
                     self.change_mode()
             if event.type == pg.MOUSEBUTTONDOWN:
@@ -457,6 +470,10 @@ class Game:
 
     def set_spell(self, name):
         self.player.set_spell(*self.spells[name])
+
+    def add_inv(self, itemtype, count):
+        return self.player.add_inv(itemtype, count)
+
 
 
 

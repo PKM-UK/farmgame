@@ -1,7 +1,7 @@
 import pygame as pg
 from settings import *
 from os import path
-
+from item import item_types
 
 class Dialog():
     game_folder = path.dirname(__file__)
@@ -20,17 +20,6 @@ class Dialog():
         self.surf.fill(Dialog.background_col)
 
         self.elements = []
-
-        boltbutton = Button(30, 30, 90, 90, self.surf, 'bolticon.png')
-        wellbutton = Button(130, 30, 90, 90, self.surf, 'wellicon.png')
-
-        boltbutton.click_callback = (lambda: self.game.set_spell('bolt'))
-        wellbutton.click_callback = (lambda: self.game.set_spell('well'))
-
-        self.elements.append(boltbutton)
-        self.elements.append(wellbutton)
-
-        self.update()
 
     def update(self):
         for el in self.elements:
@@ -61,6 +50,7 @@ class Button():
 
     border_col = (64, 255, 64)
     active_border_col = (64, 255, 255)
+    text_col = (0, 0, 0)
     border_width = 4
 
     def __init__(self, x, y, w, h, surf, icon):
@@ -73,6 +63,10 @@ class Button():
         self.border_width = Button.border_width
         self.border_col = Button.border_col
         self.active_border_col = Button.active_border_col
+        self.text_col = Button.text_col
+
+        self.caption = ''
+        self.font = pg.font.Font('freesansbold.ttf', 32)
 
         self.click_callback = None
 
@@ -85,12 +79,63 @@ class Button():
     def draw(self):
         button_rect = pg.Rect(self.x, self.y, self.w, self.h)
         pg.draw.rect(self.surf, self.border_col, button_rect)
-        # pg.blit(self.image, whatever)
+
+        text = self.font.render(self.caption, True, self.text_col, self.border_col)
+        textRect = text.get_rect()
+        textRect.right = self.x + self.w
+        textRect.bottom = self.y + self.h
+
         self.surf.blit(self.image, (self.x + self.border_width, self.y + self.border_width))
+        self.surf.blit(text, textRect)
 
     def mouse_click(self, pos):
         print('Button click!')
         self.click_callback()
         return True
+
+    def set_caption(self, text):
+        self.caption = text
+
+
+class SpellDialog(Dialog):
+    def __init__(self, x, y, w, h, screen, game):
+        super().__init__(x, y, w, h, screen, game)
+
+        boltbutton = Button(30, 30, 90, 90, self.surf, 'bolticon.png')
+        wellbutton = Button(130, 30, 90, 90, self.surf, 'wellicon.png')
+
+        boltbutton.click_callback = (lambda: self.game.set_spell('bolt'))
+        wellbutton.click_callback = (lambda: self.game.set_spell('well'))
+
+        self.elements.append(boltbutton)
+        self.elements.append(wellbutton)
+
+        self.update()
+
+class InventoryDialog(Dialog):
+    def __init__(self, x, y, w, h, screen, game):
+        super().__init__(x, y, w, h, screen, game)
+
+        self.update()
+
+    def update(self):
+        self.elements = []
+        self.add_inv_buttons()
+        super().update()
+
+    def add_inv_buttons(self):
+        new_button_x = 30
+        new_button_y = 30
+
+        for key in self.game.player.inventory.keys():
+            button = Button(new_button_x, new_button_y, 90, 90, self.surf, item_types[key].image_path)
+            button.set_caption(str(self.game.player.inventory[key]))
+            self.elements.append(button)
+
+            new_button_x = new_button_x + 120
+            if new_button_x > (self.w - 120):
+                new_button_x = 30
+                new_button_y = new_button_y + 120
+
 
 

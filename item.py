@@ -9,5 +9,9 @@ class Item:
         self.type = type
         self.image_path = image_path
 
+item_types = {
+    ItemTypes.grass: Item(ItemTypes.grass, 'grassItem.png'),
+    ItemTypes.pie: Item(ItemTypes.pie, 'pieItem.png')
+}
 
 

@@ -30,10 +30,7 @@ map_char_mapping = {
     "W": terrain_types[TerrainTypes.well]
 }
 
-item_types = {
-    ItemTypes.grass: Item(ItemTypes.grass, 'grassItem.png'),
-    ItemTypes.pie: Item(ItemTypes.pie, 'pieItem.png')
-}
+
 
 
 def collide_with_walls(sprite, group, dirr):
@@ -76,7 +73,7 @@ class Player(pg.sprite.Sprite):
         self.hit_rect.center = self.rect.center
         self.vel = vec(0, 0)
         self.pos = vec(tile_x, tile_y) * TILESIZE
-        self.rot = 0
+        self.rot = 179
         self.speed = 0
         self.last_shot = 0
         self.max_mp = PLAYER_MP
@@ -85,6 +82,9 @@ class Player(pg.sprite.Sprite):
         # Select with UI
         self.active_ability = self.game.magic_missile
         self.active_ability_duration = 0.5
+
+        # Inventory: map item type id to count
+        self.inventory = {}
 
     def get_keys(self):
         self.vel = vec(0, 0)
@@ -128,15 +128,17 @@ class Player(pg.sprite.Sprite):
 
         self.rect.topleft = self.pos
 
-        if self.vel.magnitude() > 1:
-            print(f"Flying away! vel vec {self.vel}")
-
         self.pos += self.vel * self.game.dt
         self.hit_rect.left = self.pos.x
         # print(f"Rect at {self.rect.topleft} is {self.rect.width} wide, hitrect {self.hit_rect.topleft} is {self.hit_rect.width}")
         collide_with_walls(self, self.game.walls, 'x')
         self.hit_rect.top = self.pos.y
         collide_with_walls(self, self.game.walls, 'y')
+
+    def add_inv(self, itemtype, count):
+        self.inventory[itemtype] = self.inventory.get(itemtype, 0) + count
+        print(f"Now have {self.inventory[itemtype]} items of type {itemtype}")
+        return True  # yes we did pick it up - false for inventory limits or weight or whatever
 
 
 class Mob(pg.sprite.Sprite):
@@ -280,5 +282,5 @@ class Item(pg.sprite.Sprite):
             self.rect.topleft = self.pos + vec(0, bob)
 
     def pickup(self):
-        self.game.add_inv(self.item_type, 1)
-        self.game.killing(self)
+        if self.game.add_inv(self.item_type.type, 1):
+            self.game.killing(self)
