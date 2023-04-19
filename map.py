@@ -70,11 +70,14 @@ class Map:
 
         for y in range(min_y, max_y + 1):
             for x in range(min_x, max_x + 1):
-                effect_cell = self.effects[y][x]
-                if effect_cell is not None and effect_name not in effect_cell:
-                    self.effects[y][x].append(effect_name)
-                else:
-                    self.effects[y][x] = [effect_name]
+                self.add_effect(x, y, effect_name)
+
+    def add_effect(self, x, y, effect_name):
+        effect_cell = self.effects[y][x]
+        if effect_cell is not None and effect_name not in effect_cell:
+            self.effects[y][x].append(effect_name)
+        else:
+            self.effects[y][x] = [effect_name]
 
 
 class Camera:

@@ -165,7 +165,11 @@ class Mob(pg.sprite.Sprite):
     def update(self, gamestate):
 
         # CONTROL
-        self.rot, self.vel = self.ControlComponent.get_control()
+        if self.ControlComponent is not None:
+            self.rot, self.vel = self.ControlComponent.get_control()
+        else:
+            self.rot = 0
+            self.vel = vec(0,0)
 
         # POSITION
         # self.image = pg.transform.rotate(self.game.mob_img, self.rot)
@@ -233,7 +237,7 @@ class Wall(pg.sprite.Sprite):
 
 
 class Bullet(pg.sprite.Sprite):
-    def __init__(self, game, pos, dir):
+    def __init__(self, game, pos, dir, target_tile):
         self.groups = game.all_sprites, game.bullets
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -243,6 +247,8 @@ class Bullet(pg.sprite.Sprite):
 
         self.pos = pos
         self.rect.center = pos
+        self.target_tile = target_tile
+        self.target_pos = vec((target_tile[0] + 0.5) * TILESIZE, (target_tile[1] + 0.5) * TILESIZE)
 
         self.vel = dir * BULLET_SPEED
         self.spawn_time = pg.time.get_ticks()
@@ -251,9 +257,19 @@ class Bullet(pg.sprite.Sprite):
         self.pos += self.vel * self.game.dt
         self.rect.center = self.pos
         if pg.time.get_ticks() > self.spawn_time + BULLET_LIFETIME:
-            self.kill()
+            self.game.killing(self)
+        elif (self.pos - self.target_pos).magnitude() < TILESIZE//4:
+            # spritecollide targetpos TILESIZE, bullet hit mob
+            # else
+            if not self.game.missile_hit_mob(self.target_tile[0], self.target_tile[1]):
+                self.game.missile_hit_ground(self.target_tile[0], self.target_tile[1])
+            self.game.killing(self)
+
         #if pg.sprite.spritecollideany(self, self.game.walls):
         #    self.kill()
+
+        # If mob in target square, hit
+        # else plough target square
 
 class Item(pg.sprite.Sprite):
     def __init__(self, game, tile_x, tile_y, item_type):

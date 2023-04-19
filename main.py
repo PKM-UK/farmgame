@@ -170,7 +170,7 @@ class Game:
         self.dialogs = {'spells': SpellDialog(100, 50, 400, 300, self.screen, self),
                         'inventory': InventoryDialog(100, 50, 400, 300, self.screen, self)}
 
-        self.spells = {'bolt': (self.magic_missile, 0.5),
+        self.spells = {'bolt': (self.magic_missile, 0.25),
                        'well': (self.dig_dirt, 2)}
 
         self.change_mode()
@@ -209,10 +209,11 @@ class Game:
             self.player.pos += knockbackvect
             # hit.vel = vec(0, 0)
 
-        hits = pg.sprite.groupcollide(self.mobs, self.bullets, False, True)
+        # Don't hit mobs while in flight, have to hit their square
+        """hits = pg.sprite.groupcollide(self.mobs, self.bullets, False, True)
         for hit in hits:
             hit.vel += hits[hit][0].vel * 0.05
-            hit.health -= BULLET_DMG
+            hit.health -= BULLET_DMG"""
 
         # Player picks up item
         hits = pg.sprite.spritecollide(self.player, self.items, False, collide_hit_rect)
@@ -446,7 +447,57 @@ class Game:
                     self.task_progress = self.active_task.progress / self.active_task.duration
                     self.task_continuing = True
 
-    # Targeting merge: make sure we use world/tile coords as appropriate
+
+
+
+
+    # Stuff affecting ground tiles
+
+    def eat_grass(self, x, y):
+        eat_sprite = self.map.get_sprite_at(x, y)
+        if eat_sprite.terrain_type.name == TerrainTypes.longgrass:
+            self.killing(eat_sprite)
+            self.add_terrain(x, y, terrain_types[TerrainTypes.shortgrass])
+
+    def missile_hit_ground(self, x, y):
+        target_sprite = self.map.get_sprite_at(x, y)
+        if target_sprite.terrain_type.name == TerrainTypes.dirt:
+            print(f"Plough dirt at {x}, {y}")
+            self.map.add_effect(x, y, 'water')
+        elif target_sprite.terrain_type.name == TerrainTypes.longgrass:
+            print(f"Cut grass at {x}, {y}")
+            self.killing(target_sprite)
+            self.add_terrain(x, y, terrain_types[TerrainTypes.shortgrass])
+            grass = Item(self, x, y, item_types[ItemTypes.grass])
+            self.ordered_sprites.append(grass)
+
+    def missile_hit_mob(self, x, y):
+        target_pos = vec(((x + 0.5) * TILESIZE), ((y + 0.5) * TILESIZE))
+
+        #lmobs = list(self.mobs)
+        #hits = filter(lmobs, (lambda m: (m.pos - target_pos).magnitude() < TILESIZE))
+
+        hits = [m for m in list(self.mobs) if (m.pos - target_pos).magnitude() < TILESIZE]
+        print(f"Hit {len(hits)} mobs")
+        if len(hits) > 0:
+            hits[0].health -= BULLET_DMG
+            return True
+        else:
+            return False
+
+
+
+
+
+    # Spell effects
+
+    def magic_missile(self, x, y):
+        target_pos = vec((x + 0.5) * TILESIZE, (y + 0.5) * TILESIZE)
+        target_vec_dir = (target_pos - self.player.pos).normalize()
+        print(f"Pew! {x}, {y}")
+        missile = Bullet(self, vec(self.player.pos), target_vec_dir, (x, y))
+        self.ordered_sprites.append(missile)
+
     def dig_dirt(self, x, y):
         target_sprite = self.map.get_sprite_at(x, y)
         if target_sprite.terrain_type.name == TerrainTypes.dirt:
@@ -455,18 +506,10 @@ class Game:
             # Add effect
             self.map.add_effect_circle(x, y, WATERED_EFFECT_R, 'water')
 
-    def eat_grass(self, x, y):
-        eat_sprite = self.map.get_sprite_at(x, y)
-        if eat_sprite.terrain_type.name == TerrainTypes.longgrass:
-            self.killing(eat_sprite)
-            self.add_terrain(x, y, terrain_types[TerrainTypes.shortgrass])
 
-    def magic_missile(self, x, y):
-        target_pos = vec((x + 0.5) * TILESIZE, (y + 0.5) * TILESIZE)
-        target_vec_dir = (target_pos - self.player.pos).normalize()
-        print(f"Pew! {x}, {y}")
-        missile = Bullet(self, vec(self.player.pos), target_vec_dir)
-        self.ordered_sprites.append(missile)
+
+
+
 
     def set_spell(self, name):
         self.player.set_spell(*self.spells[name])
