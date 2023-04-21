@@ -4,6 +4,8 @@ from settings import *
 
 LGOAT_IMG = 'lgoat.png'
 RGOAT_IMG = 'rgoat.png'
+LBEE_IMG = 'lbee.png'
+RBEE_IMG = 'rbee.png'
 
 # muhammad_ali = new Boxer()
 # muhammad_ali.addComponent(new ButterflyFloatComponent())
@@ -38,6 +40,25 @@ class GoatImageComponent(ImageComponent):
             return GoatImageComponent.right_goat_img
         else:
             return GoatImageComponent.left_goat_img
+
+class BeeImageComponent(ImageComponent):
+    # Class variables, lazily loaded in ctor to avoid duplication
+    left_bee_img = None
+    right_bee_img = None
+
+    def __init__(self, game, mob):
+        super().__init__(game, mob)
+        if BeeImageComponent.left_bee_img is None:
+            BeeImageComponent.left_bee_img = pg.image.load(path.join(ImageComponent.img_folder, LBEE_IMG)).convert_alpha()
+            BeeImageComponent.right_bee_img = pg.image.load(path.join(ImageComponent.img_folder, RBEE_IMG)).convert_alpha()
+            BeeImageComponent.left_bee_img = pg.transform.scale(BeeImageComponent.left_bee_img, (30, 30))
+            BeeImageComponent.right_bee_img = pg.transform.scale(BeeImageComponent.right_bee_img, (30, 30))
+
+    def get_image(self, heading):
+        if -45 < heading < 135:
+            return BeeImageComponent.right_bee_img
+        else:
+            return BeeImageComponent.left_bee_img
 
 
 

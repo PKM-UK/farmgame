@@ -120,3 +120,54 @@ class GrazerControlComponent(ControlComponent):
         return self.rot, self.vel
 
 
+class BumbleControlComponent(ControlComponent):
+    def __init__(self, game, mob):
+        super().__init__(game, mob)
+        self.speed = 2
+        self.rot = uniform(-179, 179)
+        self.vel = vec(1, 0)
+        self.flying = True
+
+        self.target_square = None
+        self.target_type = TerrainTypes.flowers
+        self.hunt_radius = GOAT_VISION_DISTACE * 2
+        self.reached_food_tick = -1  # When did we get to the food?
+        self.bumble_start = 0
+        self.bumble_time = uniform(1000, 3000)
+        self.bumble_dir = 0
+
+    def get_control(self):
+        now = pg.time.get_ticks()
+        if now - self.bumble_start > self.bumble_time:
+            self.bumble_start = now
+            self.bumble_dir = self.bumble_dir * -1
+
+            # When we reach target, set a new one
+            if self.target_square is None or (self.target_square.pos - self.mob.pos).magnitude() < (TILESIZE//2):
+                cx = int(self.mob.pos.x // TILESIZE)
+                cy = int(self.mob.pos.y // TILESIZE)
+                tiles = self.game.map.get_tile_circle(cx, cy, self.hunt_radius, 'terrain')
+
+                # Filter to only flowers and sort by furthest
+                target_tiles = list(filter(lambda tile: tile.terrain_type.name == TerrainTypes.flowers, tiles))
+                if len(target_tiles) == 0: # TODO: or hive distance > vision distance
+                    # TODO: replace with home hive
+                    self.target_square = self.game.map.get_sprite_at(int(self.game.player.pos[0] // TILESIZE), int(self.game.player.pos[1] // TILESIZE))
+                else:
+                    target_tiles.sort(key=lambda tile: (tile.pos - self.mob.pos).magnitude(), reverse=True)
+                    self.target_square = target_tiles[0]
+
+
+            target_vec = (self.target_square.pos - self.mob.pos)
+            print(f"Target is {target_vec} from {self.mob.pos}")
+
+            self.vel = target_vec.normalize() * self.speed
+            self.rot = self.vel.angle_to(vec(1, 0))
+            print(f"So we're pointing to {self.rot}")
+
+        # Every tick, adjust angle
+        self.rot = self.rot + self.bumble_dir
+        self.vel = vec(self.speed, 0).rotate(self.rot)
+
+
+        return self.rot, self.vel

@@ -11,17 +11,6 @@ from math import floor
 
 # TerrainTypes = Enum('TerrainTypes', ['dirt', 'shortgrass', 'longgrass', 'wall', 'well'])
 
-
-
-terrain_types = {
-    TerrainTypes.dirt: Terrain(TerrainTypes.dirt, False, 'dirtTile.png', ['isodirtTile.png']),
-    TerrainTypes.shortgrass: Terrain(TerrainTypes.shortgrass, False, 'grassTile.png', ['isoshortgrassTile.png']),
-    TerrainTypes.longgrass: Terrain(TerrainTypes.longgrass, False, 'grassTile.png', ['isolonggrassTile.png']),
-    TerrainTypes.tree: Terrain(TerrainTypes.tree, True, 'treeTile.png', ['isotreeTile1.png', 'isotreeTile2.png', 'isotreeTile1.png']),
-    TerrainTypes.wall: Terrain(TerrainTypes.wall, True, 'wallTile.png', ['isowallTile.png']),
-    TerrainTypes.well: Terrain(TerrainTypes.wall, True, 'wellTile.png', ['isowellTile.png'])
-}
-
 map_char_mapping = {
     ".": terrain_types[TerrainTypes.dirt],
     "g": terrain_types[TerrainTypes.shortgrass],
@@ -39,20 +28,16 @@ def collide_with_walls(sprite, group, dirr):
     if hits:
         if dirr == 'x':
             if sprite.hit_rect.centerx > hits[0].hit_rect.centerx:
-                print(f"Bump up x because {sprite.hit_rect.left} < {hits[0].hit_rect.right}")
                 sprite.pos.x = max( hits[0].hit_rect.right + 1, sprite.pos.x + 1)
             elif sprite.hit_rect.centerx < hits[0].hit_rect.centerx:
-                print(f"Bump down x because {sprite.hit_rect.right} > {hits[0].hit_rect.left}")
                 sprite.pos.x = min(hits[0].hit_rect.left - sprite.hit_rect.width - 1, sprite.pos.x - 1)
 
             sprite.vel.x = 0
             sprite.hit_rect.x = sprite.pos.x
         elif dirr == 'y':
             if sprite.hit_rect.centery > hits[0].hit_rect.centery:
-                print(f"Bump up y because {sprite.hit_rect.top} < {hits[0].hit_rect.bottom}")
                 sprite.pos.y = hits[0].hit_rect.bottom + 1
             elif sprite.hit_rect.centery < hits[0].hit_rect.centery:
-                print(f"Bump down y because {sprite.hit_rect.bottom} > {hits[0].hit_rect.top}")
                 sprite.pos.y = hits[0].hit_rect.top - sprite.hit_rect.height - 1
             sprite.vel.y = 0
             sprite.hit_rect.y = sprite.pos.y
@@ -179,9 +164,11 @@ class Mob(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
         self.hit_rect.left = self.pos.x
-        collide_with_walls(self, self.game.walls, 'x')
+        if self.ControlComponent is None or not (hasattr(self.ControlComponent, 'flying')):
+            collide_with_walls(self, self.game.walls, 'x')
         self.hit_rect.top = self.pos.y
-        collide_with_walls(self, self.game.walls, 'y')
+        if self.ControlComponent is None or not (hasattr(self.ControlComponent, 'flying')):
+            collide_with_walls(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
 
         # COMBAT

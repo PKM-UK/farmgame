@@ -7,6 +7,7 @@ class TerrainTypes(Enum):
     tree = 4
     wall = 5
     well = 6
+    flowers = 7
 
 class Terrain:
     def __init__(self, name, obstacle, imgpath, isotiles):
@@ -20,3 +21,12 @@ class Terrain:
         # sample effect: {type: 'grass_grow', radius: '5', p: 0.05}
         self.effects = []
 
+terrain_types = {
+    TerrainTypes.dirt: Terrain(TerrainTypes.dirt, False, 'dirtTile.png', ['isodirtTile.png']),
+    TerrainTypes.shortgrass: Terrain(TerrainTypes.shortgrass, False, 'grassTile.png', ['isoshortgrassTile.png']),
+    TerrainTypes.longgrass: Terrain(TerrainTypes.longgrass, False, 'grassTile.png', ['isolonggrassTile.png']),
+    TerrainTypes.flowers: Terrain(TerrainTypes.flowers, False, 'grassTile.png', ['isoflowersTile.png']),
+    TerrainTypes.tree: Terrain(TerrainTypes.tree, True, 'treeTile.png', ['isotreeTile1.png', 'isotreeTile2.png', 'isotreeTile1.png']),
+    TerrainTypes.wall: Terrain(TerrainTypes.wall, True, 'wallTile.png', ['isowallTile.png']),
+    TerrainTypes.well: Terrain(TerrainTypes.well, True, 'wellTile.png', ['isowellTile.png'])
+}

@@ -53,6 +53,7 @@ class Game:
 
         self.gamestate = {}
         self.gamestate["iso_mode"] = False
+        self.gamestate["debug_draw"] = True
 
         self.effect_update_interval = 3000
         self.z_sort_interval = 250
@@ -150,12 +151,22 @@ class Game:
                 self.ordered_sprites.append(wall_sprite)
 
         # Debug: add some items
+        """
         for p in range(3):
             pie = Item(self, p+2, 2, item_types[ItemTypes.pie])
             self.ordered_sprites.append(pie)
         for p in range(3):
             pie = Item(self, p+2, 4, item_types[ItemTypes.grass])
-            self.ordered_sprites.append(pie)
+            self.ordered_sprites.append(pie)"""
+
+        # Debug: add bees
+        for p in range(1):
+            col = p * 3 + 2
+            row = p * 2 + 2
+            mob_sprite = Mob(self, col, row)
+            mob_sprite.ImageComponent = BeeImageComponent(self, mob_sprite)
+            mob_sprite.ControlComponent = BumbleControlComponent(self, mob_sprite)
+            self.ordered_sprites.append(mob_sprite)
 
         # Now sort walls by Z
         self.sort_sprites()
@@ -402,6 +413,8 @@ class Game:
                     self.show_dialog('inventory')
                 elif event.key == pg.K_i:
                     self.change_mode()
+                elif event.key == pg.K_d:
+                    self.gamestate["debug_draw"] = not self.gamestate["debug_draw"]
             if event.type == pg.MOUSEBUTTONDOWN:
                 self.mouse_click()
 
@@ -464,7 +477,7 @@ class Game:
         if target_sprite.terrain_type.name == TerrainTypes.dirt:
             print(f"Plough dirt at {x}, {y}")
             self.map.add_effect(x, y, 'water')
-        elif target_sprite.terrain_type.name == TerrainTypes.longgrass:
+        elif target_sprite.terrain_type.name in [TerrainTypes.longgrass, TerrainTypes.flowers]:
             print(f"Cut grass at {x}, {y}")
             self.killing(target_sprite)
             self.add_terrain(x, y, terrain_types[TerrainTypes.shortgrass])
