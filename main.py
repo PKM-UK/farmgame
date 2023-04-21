@@ -53,7 +53,7 @@ class Game:
 
         self.gamestate = {}
         self.gamestate["iso_mode"] = False
-        self.gamestate["debug_draw"] = True
+        self.gamestate["debug_draw"] = False
 
         self.effect_update_interval = 3000
         self.z_sort_interval = 250
@@ -126,6 +126,7 @@ class Game:
         self.ordered_sprites = []
         self.walls = pg.sprite.Group()
         self.mobs = pg.sprite.Group()
+        self.hostile_mobs = pg.sprite.Group()
         self.bullets = pg.sprite.Group()
         self.animated = pg.sprite.Group()
         self.items = pg.sprite.Group()
@@ -150,24 +151,6 @@ class Game:
                 self.map.add_sprite(col, row, wall_sprite)
                 self.ordered_sprites.append(wall_sprite)
 
-        # Debug: add some items
-        """
-        for p in range(3):
-            pie = Item(self, p+2, 2, item_types[ItemTypes.pie])
-            self.ordered_sprites.append(pie)
-        for p in range(3):
-            pie = Item(self, p+2, 4, item_types[ItemTypes.grass])
-            self.ordered_sprites.append(pie)"""
-
-        # Debug: add bees
-        for p in range(3):
-            col = p * 3 + 2
-            row = p * 2 + 2
-            mob_sprite = Mob(self, col, row)
-            mob_sprite.ImageComponent = BeeImageComponent(self, mob_sprite)
-            mob_sprite.ControlComponent = BumbleControlComponent(self, mob_sprite)
-            self.ordered_sprites.append(mob_sprite)
-
         # Now sort walls by Z
         self.sort_sprites()
 
@@ -175,14 +158,16 @@ class Game:
 
         self.anim = Animator(self.animated)
 
-        self.effects = {'water': WateredEffect(self, 'water', WATERED_EFFECT_P)}
+        self.effects = {'water': WateredEffect(self, 'water', WATERED_EFFECT_P),
+                        'pollinate': PollinateEffect(self, 'pollinate', POLLINATE_EFFECT_P)}
 
         # Set up UI now we have player etc.
         self.dialogs = {'spells': SpellDialog(100, 50, 400, 300, self.screen, self),
                         'inventory': InventoryDialog(100, 50, 400, 300, self.screen, self)}
 
         self.spells = {'bolt': (self.magic_missile, 0.25),
-                       'well': (self.dig_dirt, 2)}
+                       'well': (self.dig_dirt, 2),
+                       'hive': (self.build_hive, 3)}
 
         self.change_mode()
 
@@ -210,7 +195,7 @@ class Game:
         self.mouse_hover()
 
         # Mobs hit player
-        hits = pg.sprite.spritecollide(self.player, self.mobs, False, collide_hit_rect)
+        hits = pg.sprite.spritecollide(self.player, self.hostile_mobs, False, collide_hit_rect)
         for hit in hits:
             self.player.mp -= MOB_DAMAGE
             recoilvect = vec(MOB_RECOIL,0).rotate(180-hit.rot)
@@ -238,7 +223,7 @@ class Game:
         if now - self.last_effect_tick > self.effect_update_interval:
             self.last_effect_tick = now
             print('doing fx')
-            for effect_name in ['water']:
+            for effect_name in self.effects.keys():
                 effect = self.effects[effect_name]
                 e_squares = self.map.get_affected_squares(effect_name)
                 for square in e_squares:
@@ -439,7 +424,7 @@ class Game:
         self.map.add_sprite(col, row, wall_sprite)
 
     def sort_sprites(self):
-        self.ordered_sprites.sort(key=lambda s: s.pos.x + s.pos.y + (TILESIZE if isinstance(s, Mob) or isinstance(s, Bullet) else 0))
+        self.ordered_sprites.sort(key=lambda s: s.pos.x + s.pos.y + ((TILESIZE*2) if isinstance(s, Mob) or isinstance(s, Bullet) else 0))
 
     def killing(self, sprite):
         self.ordered_sprites.remove(sprite)
@@ -519,6 +504,20 @@ class Game:
             # Add effect
             self.map.add_effect_circle(x, y, WATERED_EFFECT_R, 'water')
 
+    def build_hive(self, x, y):
+        target_sprite = self.map.get_sprite_at(x, y)
+        if target_sprite.terrain_type.name in [TerrainTypes.shortgrass, TerrainTypes.longgrass]:
+            self.killing(target_sprite)
+            self.add_terrain(x, y, terrain_types[TerrainTypes.hive])
+            for p in range(3):
+                col = x + int(uniform(-2, 2))
+                row = y + int(uniform(-2, 2))
+                mob_sprite = Mob(self, col, row)
+                mob_sprite.ImageComponent = BeeImageComponent(self, mob_sprite)
+                mob_sprite.ControlComponent = BumbleControlComponent(self, mob_sprite)
+                self.ordered_sprites.append(mob_sprite)
+            # Add effect
+            self.map.add_effect_circle(x, y, POLLINATE_EFFECT_R, 'pollinate')
 
 
 

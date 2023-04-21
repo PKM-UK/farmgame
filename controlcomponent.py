@@ -129,6 +129,7 @@ class BumbleControlComponent(ControlComponent):
         self.vel = vec(1, 0)
         self.flying = True
 
+        self.home_square = self.game.map.get_sprite_at(*tile_from_vec(self.mob.pos))
         self.target_square = None
         self.target_type = TerrainTypes.flowers
         self.hunt_radius = GOAT_VISION_DISTACE * 2
@@ -144,7 +145,7 @@ class BumbleControlComponent(ControlComponent):
             self.bumble_dir = self.bumble_dir * -1
 
             # When we reach target, set a new one
-            if True or self.target_square is None or (self.target_square.pos - self.mob.pos).magnitude() < (TILESIZE//2):
+            if self.target_square is None or (self.target_square.pos - self.mob.pos).magnitude() < (TILESIZE):
                 cx = int(self.mob.pos.x // TILESIZE)
                 cy = int(self.mob.pos.y // TILESIZE)
 
@@ -155,14 +156,18 @@ class BumbleControlComponent(ControlComponent):
                 # Filter to only flowers and sort by furthest
                 target_tiles = list(filter(lambda tile: tile.terrain_type.name == TerrainTypes.flowers, tiles))
                 if len(target_tiles) == 0: # TODO: or hive distance > vision distance
-                    # TODO: replace with home hive
-                    self.target_square = self.game.map.get_sprite_at(*tile_from_vec(self.game.player.pos))
+                    print("Going home because no flowers in range")
+                    self.target_square = self.home_square
                 else:
                     target_tiles.sort(key=lambda tile: (tile.pos - self.mob.pos).magnitude(), reverse=True)
-                    self.target_square = target_tiles[0]
+                    self.target_square = target_tiles[int(uniform(0, len(target_tiles)-1))]
 
 
             target_vec = (self.target_square.pos - self.mob.pos)
+            # Make sure target vec isn't (0,0)
+            if target_vec.magnitude() < 10:
+                target_vec = target_vec + vec(int(uniform(-10,10)), int(uniform(-10,10)))
+
             print(f"Target is {tile_from_vec(target_vec)} from {tile_from_vec(self.mob.pos)}")
 
             self.vel = target_vec.normalize() * self.speed

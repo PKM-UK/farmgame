@@ -103,12 +103,15 @@ class SpellDialog(Dialog):
 
         boltbutton = Button(30, 30, 90, 90, self.surf, 'bolticon.png')
         wellbutton = Button(130, 30, 90, 90, self.surf, 'wellicon.png')
+        hivebutton = Button(230, 30, 90, 90, self.surf, 'hiveicon.png')
 
         boltbutton.click_callback = (lambda: self.game.set_spell('bolt'))
         wellbutton.click_callback = (lambda: self.game.set_spell('well'))
+        hivebutton.click_callback = (lambda: self.game.set_spell('hive'))
 
         self.elements.append(boltbutton)
         self.elements.append(wellbutton)
+        self.elements.append(hivebutton)
 
         self.update()
 
