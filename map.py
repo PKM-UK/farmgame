@@ -1,6 +1,8 @@
 import pygame as pg
 from settings import *
 
+def tile_from_vec(pos):
+    return int(pos[0] // TILESIZE), int(pos[1] // TILESIZE)
 
 def collide_hit_rect(one, two):
     # Player, wall

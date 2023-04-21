@@ -2,6 +2,7 @@ from settings import *
 from sprites import TerrainTypes
 import pygame as py
 from random import uniform
+from map import tile_from_vec
 
 vec = pg.math.Vector2
 
@@ -123,7 +124,7 @@ class GrazerControlComponent(ControlComponent):
 class BumbleControlComponent(ControlComponent):
     def __init__(self, game, mob):
         super().__init__(game, mob)
-        self.speed = 2
+        self.speed = 40
         self.rot = uniform(-179, 179)
         self.vel = vec(1, 0)
         self.flying = True
@@ -134,7 +135,7 @@ class BumbleControlComponent(ControlComponent):
         self.reached_food_tick = -1  # When did we get to the food?
         self.bumble_start = 0
         self.bumble_time = uniform(1000, 3000)
-        self.bumble_dir = 0
+        self.bumble_dir = 1
 
     def get_control(self):
         now = pg.time.get_ticks()
@@ -143,26 +144,29 @@ class BumbleControlComponent(ControlComponent):
             self.bumble_dir = self.bumble_dir * -1
 
             # When we reach target, set a new one
-            if self.target_square is None or (self.target_square.pos - self.mob.pos).magnitude() < (TILESIZE//2):
+            if True or self.target_square is None or (self.target_square.pos - self.mob.pos).magnitude() < (TILESIZE//2):
                 cx = int(self.mob.pos.x // TILESIZE)
                 cy = int(self.mob.pos.y // TILESIZE)
+
+                cx, cy = tile_from_vec(self.mob.pos)
+
                 tiles = self.game.map.get_tile_circle(cx, cy, self.hunt_radius, 'terrain')
 
                 # Filter to only flowers and sort by furthest
                 target_tiles = list(filter(lambda tile: tile.terrain_type.name == TerrainTypes.flowers, tiles))
                 if len(target_tiles) == 0: # TODO: or hive distance > vision distance
                     # TODO: replace with home hive
-                    self.target_square = self.game.map.get_sprite_at(int(self.game.player.pos[0] // TILESIZE), int(self.game.player.pos[1] // TILESIZE))
+                    self.target_square = self.game.map.get_sprite_at(*tile_from_vec(self.game.player.pos))
                 else:
                     target_tiles.sort(key=lambda tile: (tile.pos - self.mob.pos).magnitude(), reverse=True)
                     self.target_square = target_tiles[0]
 
 
             target_vec = (self.target_square.pos - self.mob.pos)
-            print(f"Target is {target_vec} from {self.mob.pos}")
+            print(f"Target is {tile_from_vec(target_vec)} from {tile_from_vec(self.mob.pos)}")
 
             self.vel = target_vec.normalize() * self.speed
-            self.rot = self.vel.angle_to(vec(1, 0))
+            self.rot = 0 - self.vel.angle_to(vec(1, 0)) - (self.bumble_dir * 10)
             print(f"So we're pointing to {self.rot}")
 
         # Every tick, adjust angle

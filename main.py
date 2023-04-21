@@ -160,7 +160,7 @@ class Game:
             self.ordered_sprites.append(pie)"""
 
         # Debug: add bees
-        for p in range(1):
+        for p in range(3):
             col = p * 3 + 2
             row = p * 2 + 2
             mob_sprite = Mob(self, col, row)
