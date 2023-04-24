@@ -9,6 +9,7 @@ class TerrainTypes(Enum):
     well = 6
     flowers = 7
     hive = 8
+    sapling = 9
 
 class Terrain:
     def __init__(self, name, obstacle, imgpath, isotiles):
@@ -27,6 +28,7 @@ terrain_types = {
     TerrainTypes.shortgrass: Terrain(TerrainTypes.shortgrass, False, 'grassTile.png', ['isoshortgrassTile.png']),
     TerrainTypes.longgrass: Terrain(TerrainTypes.longgrass, False, 'grassTile.png', ['isolonggrassTile.png']),
     TerrainTypes.flowers: Terrain(TerrainTypes.flowers, False, 'grassTile.png', ['isoflowersTile.png']),
+    TerrainTypes.sapling: Terrain(TerrainTypes.sapling, True, 'saplingTile.png', ['isosaplingTile.png']),
     TerrainTypes.tree: Terrain(TerrainTypes.tree, True, 'treeTile.png', ['isotreeTile1.png', 'isotreeTile2.png', 'isotreeTile1.png']),
     TerrainTypes.wall: Terrain(TerrainTypes.wall, True, 'wallTile.png', ['isowallTile.png']),
     TerrainTypes.well: Terrain(TerrainTypes.well, True, 'wellTile.png', ['isowellTile.png']),

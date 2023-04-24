@@ -1,5 +1,6 @@
 from settings import *
 from sprites import TerrainTypes
+from item import ItemTypes
 import pygame as py
 from random import uniform
 from map import tile_from_vec
@@ -62,24 +63,27 @@ class GrazerControlComponent(ControlComponent):
         self.hunt_radius = GOAT_VISION_DISTACE
         self.saw_food_tick = -1
         self.reached_food_tick = -1  # When did we get to the food?
+        self.poop_tick = pg.time.get_ticks()
 
 
     def get_control(self):
         now = pg.time.get_ticks()
+        cx = int(self.mob.pos.x // TILESIZE)
+        cy = int(self.mob.pos.y // TILESIZE)
 
         if self.reached_food_tick > 0 and now - self.reached_food_tick > GOAT_EAT_TIME:
             self.game.eat_grass(self.target_square.tile_x, self.target_square.tile_y)
             self.target_square = None
             self.reached_food_tick = -1
 
+        if now - self.poop_tick > GOAT_POOP_FREQ:
+            self.game.add_item(cx, cy, ItemTypes.poop)
+            self.poop_tick = now
+
         if self.target_square is None:
             if now - self.tick > GOAT_ATTENTION_SPAN:
                 self.tick = now
                 # Find a food square
-                # Look in local 9x9 square
-                cx = int(self.mob.pos.x // TILESIZE)
-                cy = int(self.mob.pos.y // TILESIZE)
-
                 # Ask the map for a list of sprites within our hunt radius
                 tiles = self.game.map.get_tile_circle(cx, cy, self.hunt_radius, 'terrain')
 

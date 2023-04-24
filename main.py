@@ -159,7 +159,8 @@ class Game:
         self.anim = Animator(self.animated)
 
         self.effects = {'water': WateredEffect(self, 'water', WATERED_EFFECT_P),
-                        'pollinate': PollinateEffect(self, 'pollinate', POLLINATE_EFFECT_P)}
+                        'pollinate': PollinateEffect(self, 'pollinate', POLLINATE_EFFECT_P),
+                        'fertile': FertileEffect(self, 'fertile', FERTILE_EFFECT_P)}
 
         # Set up UI now we have player etc.
         self.dialogs = {'spells': SpellDialog(100, 50, 400, 300, self.screen, self),
@@ -167,7 +168,9 @@ class Game:
 
         self.spells = {'bolt': (self.magic_missile, 0.25),
                        'well': (self.dig_dirt, 2),
-                       'hive': (self.build_hive, 3)}
+                       'hive': (self.build_hive, 3),
+                       'compost': (self.fertilise, 1),
+                       'sapling': (self.plant_tree, 2)}
 
         self.change_mode()
 
@@ -423,6 +426,10 @@ class Game:
 
         self.map.add_sprite(col, row, wall_sprite)
 
+    def add_item(self, col, row, item_type):
+        grass = Item(self, col, row, item_types[item_type])
+        self.ordered_sprites.append(grass)
+
     def sort_sprites(self):
         self.ordered_sprites.sort(key=lambda s: s.pos.x + s.pos.y + ((TILESIZE*2) if isinstance(s, Mob) or isinstance(s, Bullet) else 0))
 
@@ -466,8 +473,7 @@ class Game:
             print(f"Cut grass at {x}, {y}")
             self.killing(target_sprite)
             self.add_terrain(x, y, terrain_types[TerrainTypes.shortgrass])
-            grass = Item(self, x, y, item_types[ItemTypes.grass])
-            self.ordered_sprites.append(grass)
+            self.add_item(x, y, ItemTypes.grass)
 
     def missile_hit_mob(self, x, y):
         target_pos = vec(((x + 0.5) * TILESIZE), ((y + 0.5) * TILESIZE))
@@ -487,7 +493,7 @@ class Game:
 
 
 
-    # Spell effects
+    # Spell effects: must take tile co-ords as arguments
 
     def magic_missile(self, x, y):
         target_pos = vec((x + 0.5) * TILESIZE, (y + 0.5) * TILESIZE)
@@ -498,7 +504,7 @@ class Game:
 
     def dig_dirt(self, x, y):
         target_sprite = self.map.get_sprite_at(x, y)
-        if target_sprite.terrain_type.name == TerrainTypes.dirt:
+        if target_sprite.terrain_type.name in [TerrainTypes.dirt, TerrainTypes.shortgrass, TerrainTypes.longgrass]:
             self.killing(target_sprite)
             self.add_terrain(x, y, terrain_types[TerrainTypes.well])
             # Add effect
@@ -519,7 +525,17 @@ class Game:
             # Add effect
             self.map.add_effect_circle(x, y, POLLINATE_EFFECT_R, 'pollinate')
 
+    def fertilise(self, x, y):
+        target_sprite = self.map.get_sprite_at(x, y)
+        if target_sprite.terrain_type.name in [TerrainTypes.dirt, TerrainTypes.shortgrass, TerrainTypes.longgrass]:
+            self.map.add_effect(x, y, 'fertile')
 
+    def plant_tree(self, x, y):
+        target_sprite = self.map.get_sprite_at(x, y)
+        if target_sprite.terrain_type.name in [TerrainTypes.dirt, TerrainTypes.shortgrass, TerrainTypes.longgrass]:
+            if 'fertile' in self.map.get_effects(x, y):
+                self.killing(target_sprite)
+                self.add_terrain(x, y, terrain_types[TerrainTypes.sapling])
 
 
 

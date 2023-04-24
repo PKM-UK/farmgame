@@ -25,6 +25,7 @@ class WateredEffect(Effect):
                 self.game.killing(sprite)
                 self.game.add_terrain(square[0], square[1], terrain_types[TerrainTypes.longgrass])
 
+
 class PollinateEffect(Effect):
     def __init__(self, game, name, p):
         super().__init__(game, name, p)
@@ -33,3 +34,13 @@ class PollinateEffect(Effect):
     def do_thing(self, square, sprite):
         self.game.killing(sprite)
         self.game.add_terrain(square[0], square[1], terrain_types[TerrainTypes.flowers])
+
+
+class FertileEffect(Effect):
+    def __init__(self, game, name, p):
+        super().__init__(game, name, p)
+        self.affected_types = [TerrainTypes.sapling]
+
+    def do_thing(self, square, sprite):
+        self.game.killing(sprite)
+        self.game.add_terrain(square[0], square[1], terrain_types[TerrainTypes.tree])

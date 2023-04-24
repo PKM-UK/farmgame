@@ -81,6 +81,9 @@ class Map:
         else:
             self.effects[y][x] = [effect_name]
 
+    def get_effects(self, x, y):
+        return self.effects[y][x]
+
 
 class Camera:
     def __init__(self, width, height, iso):
