@@ -6,6 +6,8 @@ LGOAT_IMG = 'lgoat.png'
 RGOAT_IMG = 'rgoat.png'
 LBEE_IMG = 'lbee.png'
 RBEE_IMG = 'rbee.png'
+LCAT_IMG = 'lcat.png'
+RCAT_IMG = 'rcat.png'
 
 # muhammad_ali = new Boxer()
 # muhammad_ali.addComponent(new ButterflyFloatComponent())
@@ -59,6 +61,25 @@ class BeeImageComponent(ImageComponent):
             return BeeImageComponent.right_bee_img
         else:
             return BeeImageComponent.left_bee_img
+
+class CatImageComponent(ImageComponent):
+    # Class variables, lazily loaded in ctor to avoid duplication
+    left_cat_img = None
+    right_cat_img = None
+
+    def __init__(self, game, mob):
+        super().__init__(game, mob)
+        if CatImageComponent.left_cat_img is None:
+            CatImageComponent.left_cat_img = pg.image.load(path.join(ImageComponent.img_folder, LCAT_IMG)).convert_alpha()
+            CatImageComponent.right_cat_img = pg.image.load(path.join(ImageComponent.img_folder, RCAT_IMG)).convert_alpha()
+            CatImageComponent.left_cat_img = pg.transform.scale(CatImageComponent.left_cat_img, (30, 30))
+            CatImageComponent.right_cat_img = pg.transform.scale(CatImageComponent.right_cat_img, (30, 30))
+
+    def get_image(self, heading):
+        if -45 < heading < 135:
+            return CatImageComponent.right_cat_img
+        else:
+            return CatImageComponent.left_cat_img
 
 
 

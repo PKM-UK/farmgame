@@ -184,3 +184,33 @@ class BumbleControlComponent(ControlComponent):
 
 
         return self.rot, self.vel
+
+
+class PetControlComponent(ControlComponent):
+    def __init__(self, game, mob, loyalty):
+        super().__init__(game, mob)
+        self.speed = 40
+        self.rot = 0
+        self.vel = vec(0, 0)
+
+        self.huntMode = HunterControlComponent(game, mob)
+        self.ambleMode = DrifterControlComponent(game, mob)
+        self.activeMode = self.huntMode
+
+        self.loyalty = loyalty
+        self.attentionspan = 5000
+        self.tick = pg.time.get_ticks()
+
+    def get_control(self):
+        now = pg.time.get_ticks()
+        if now - self.tick > self.attentionspan:
+            if uniform(0, 1) < self.loyalty:
+                print('Meow!')
+                self.activeMode = self.huntMode
+            else:
+                print('prrrr')
+                self.activeMode = self.ambleMode
+            self.tick = now
+
+
+        return self.activeMode.get_control()

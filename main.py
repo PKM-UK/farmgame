@@ -151,6 +151,11 @@ class Game:
                 self.map.add_sprite(col, row, wall_sprite)
                 self.ordered_sprites.append(wall_sprite)
 
+        mob_sprite = Mob(self, 3, 3)
+        mob_sprite.ImageComponent = CatImageComponent(self, mob_sprite)
+        mob_sprite.ControlComponent = PetControlComponent(self, mob_sprite, 0.3)
+        self.ordered_sprites.append(mob_sprite)
+
         # Now sort walls by Z
         self.sort_sprites()
 
