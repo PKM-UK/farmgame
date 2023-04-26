@@ -72,7 +72,8 @@ class Map:
 
         for y in range(min_y, max_y + 1):
             for x in range(min_x, max_x + 1):
-                self.add_effect(x, y, effect_name)
+                if ((cx-x)**2 + (cy-y)**2) < r**2:
+                    self.add_effect(x, y, effect_name)
 
     def add_effect(self, x, y, effect_name):
         effect_cell = self.effects[y][x]
