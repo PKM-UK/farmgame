@@ -5,3 +5,7 @@ __pycache__/
 
 log.txt
 statlog.py
+
+# Save files
+*.pickle
+

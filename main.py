@@ -145,6 +145,8 @@ class Game:
                     mob_sprite.controlComponent = GrazerControlComponent(self, mob_sprite)
                     self.ordered_sprites.append(mob_sprite)
 
+                    self.debug_goat = mob_sprite
+
                     tile = '.'   # Dirty hax to put dirt under mobs
                 elif tile == 'p':
                     self.player = Player(self, col, row)
@@ -574,17 +576,29 @@ class Game:
         # Having player in the group causes issues so we kill (remove from groups)
         self.player.kill()
 
+        # No images in any sprites
         for s in self.all_sprites:
             s.game = None
             s.image = None
             s.iso_image = None
+
+        # No entity components with references to game
+        """self.debug_goat.imageComponent = None
+        self.debug_goat.controlComponent = None"""
+
+        # Serialising Player is a faff, just do props
+        # Not doing active_ability because having a callback to game requires game
+        # TODO: replace self.active_ability with enum index into a dict so we can serialise it
+        player_info = (self.player.pos, self.player.vel, self.player.rot, self.player.inventory, self.player.max_mp )
+
 
         # Serialization
         game_folder = path.dirname(__file__)
         save_folder = path.join(game_folder, "save")
 
         with open(path.join(save_folder, "test.pickle"), "wb") as outfile:
-            pickle.dump(self.map.sprites, outfile)
+            pickle.dump((player_info, self.map.sprites), outfile)
+            # pickle.dump(self.debug_goat, outfile)
         print("Written objects")
 
         # Restoration
@@ -594,24 +608,31 @@ class Game:
                 s.game = self
                 s.image = terrains[s.terrain_type].img
                 s.iso_image = terrains[s.terrain_type].iso_images[s.anim_frame]
+
         self.player.image = self.player_img
         self.player.iso_image = self.iso_player_img
 
+        """for s in self.mobs:
+            s.game = self
+        self.debug_goat.imageComponent = GoatImageComponent(self, self.debug_goat)
+        self.debug_goat.controlComponent = GrazerControlComponent(self, self.debug_goat)"""
+
     def loadgame(self, savefile):
 
-        # Preparation
+        # Preparation: nuke and repave
         self.ordered_sprites = []
+
+        """self.debug_goat.kill()
+        self.debug_goat = None"""
 
         # Deserialization
         game_folder = path.dirname(__file__)
         save_folder = path.join(game_folder, "save")
-        loaded_sprites = []
-
 
         with open(path.join(save_folder, "test.pickle"), "rb") as infile:
             # (self.map.sprites, self.map.effects, self.player, self.ordered_sprites) = pickle.load(infile)
-            loaded_sprites = pickle.load(infile)
-            self.map.sprites = loaded_sprites
+            (player_info, self.map.sprites) = pickle.load(infile)
+            # self.debug_goat = pickle.load(infile)
 
         # Restoration
         for row in self.map.sprites:
@@ -621,6 +642,15 @@ class Game:
                 s.iso_image = terrains[s.terrain_type].iso_images[s.anim_frame]
                 self.ordered_sprites.append(s)
                 self.all_sprites.add(s)
+
+        (self.player.pos, self.player.vel, self.player.rot, self.player.inventory, self.player.max_mp) = player_info
+
+        # for s in self.mobs:
+        """self.debug_goat.game = self
+        self.debug_goat.imageComponent = GoatImageComponent(self, self.debug_goat)
+        self.debug_goat.controlComponent = GrazerControlComponent(self, self.debug_goat)
+
+        self.mobs.add(self.debug_goat)"""
 
 
         print("Reconstructed objects")
