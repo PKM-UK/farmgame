@@ -4,6 +4,9 @@
 # Video link: https://youtu.be/3UxnelT9aCo
 import pygame as pg
 import sys
+import pickle
+import copy
+
 from settings import *
 from sprites import *
 from imagecomponent import *
@@ -16,6 +19,7 @@ from task import *
 from dialog import *
 from os import path
 from math import fmod, floor
+
 
 def draw_player_mp(surf, x, y, health):
     health = max(health, 0)
@@ -91,22 +95,22 @@ class Game:
         # self.iso_player_img = pg.transform.scale(self.iso_player_img, (TILESIZE * 2, floor((self.iso_player_img.get_rect().height / self.iso_player_img.get_rect().width) * TILESIZE * 2)))
         self.mob_img = pg.image.load(path.join(self.img_folder, MOB_IMG)).convert_alpha()
 
-        for tkey in terrain_types.keys():
-            ttype = terrain_types[tkey]
+        for tkey in terrains.keys():
+            ttype = terrains[tkey]
             # name from ttype
             tname = ttype.name
             # load and transform, put in appropriate map
             img = pg.image.load(path.join(self.img_folder, ttype.tile)).convert_alpha()
             img = pg.transform.scale(img, (TILESIZE, TILESIZE))
             # self.terrain_images[tname] = img
-            terrain_types[tkey].img = img
+            terrains[tkey].img = img
 
             for isotilepath in ttype.isotiles:
                 iso_img = pg.image.load(path.join(self.img_folder, isotilepath)).convert_alpha()
                 iso_img = pg.transform.scale(iso_img, (TILESIZE * 2, floor(
                     (iso_img.get_rect().height / iso_img.get_rect().width) * TILESIZE * 2)))
                 # self.terrain_iso_images[tname] = iso_img
-                terrain_types[tkey].iso_images.append(iso_img)
+                terrains[tkey].iso_images.append(iso_img)
 
         for ikey in item_types.keys():
             itype = item_types[ikey]
@@ -137,8 +141,8 @@ class Game:
             for col, tile in enumerate(tiles):
                 if tile == 'z':
                     mob_sprite = Mob(self, col, row)
-                    mob_sprite.ImageComponent = GoatImageComponent(self, mob_sprite)
-                    mob_sprite.ControlComponent = GrazerControlComponent(self, mob_sprite)
+                    mob_sprite.imageComponent = GoatImageComponent(self, mob_sprite)
+                    mob_sprite.controlComponent = GrazerControlComponent(self, mob_sprite)
                     self.ordered_sprites.append(mob_sprite)
 
                     tile = '.'   # Dirty hax to put dirt under mobs
@@ -151,10 +155,10 @@ class Game:
                 self.map.add_sprite(col, row, wall_sprite)
                 self.ordered_sprites.append(wall_sprite)
 
-        mob_sprite = Mob(self, 3, 3)
-        mob_sprite.ImageComponent = CatImageComponent(self, mob_sprite)
-        mob_sprite.ControlComponent = PetControlComponent(self, mob_sprite, 0.3)
-        self.ordered_sprites.append(mob_sprite)
+        """mob_sprite = Mob(self, 3, 3)
+        mob_sprite.imageComponent = CatImageComponent(self, mob_sprite)
+        mob_sprite.controlComponent = PetControlComponent(self, mob_sprite, 0.3)
+        self.ordered_sprites.append(mob_sprite)"""
 
         # Now sort walls by Z
         self.sort_sprites()
@@ -240,7 +244,7 @@ class Game:
                     y = square[1]
 
                     rnd = uniform(0.0,1.0)
-                    if self.map.sprites[y][x] and self.map.sprites[y][x].terrain_type.name in effect.affected_types and rnd < effect.probability:
+                    if self.map.sprites[y][x] and self.map.sprites[y][x].terrain_type in effect.affected_types and rnd < effect.probability:
                         effect.do_thing(square, self.map.sprites[y][x])
 
         if now - self.last_z_sort_tick > self.z_sort_interval:
@@ -408,6 +412,10 @@ class Game:
                     self.change_mode()
                 elif event.key == pg.K_d:
                     self.gamestate["debug_draw"] = not self.gamestate["debug_draw"]
+                elif event.key == pg.K_s:
+                    self.savegame("quicksave.sav")
+                elif event.key == pg.K_l:
+                    self.loadgame("quicksave.sav")
             if event.type == pg.MOUSEBUTTONDOWN:
                 self.mouse_click()
 
@@ -465,19 +473,19 @@ class Game:
 
     def eat_grass(self, x, y):
         eat_sprite = self.map.get_sprite_at(x, y)
-        if eat_sprite.terrain_type.name == TerrainTypes.longgrass:
+        if eat_sprite.terrain_type == TerrainTypes.longgrass:
             self.killing(eat_sprite)
-            self.add_terrain(x, y, terrain_types[TerrainTypes.shortgrass])
+            self.add_terrain(x, y, TerrainTypes.shortgrass)
 
     def missile_hit_ground(self, x, y):
         target_sprite = self.map.get_sprite_at(x, y)
-        if target_sprite.terrain_type.name == TerrainTypes.dirt:
+        if target_sprite.terrain_type == TerrainTypes.dirt:
             print(f"Plough dirt at {x}, {y}")
             self.map.add_effect(x, y, 'water')
-        elif target_sprite.terrain_type.name in [TerrainTypes.longgrass, TerrainTypes.flowers]:
+        elif target_sprite.terrain_type in [TerrainTypes.longgrass, TerrainTypes.flowers]:
             print(f"Cut grass at {x}, {y}")
             self.killing(target_sprite)
-            self.add_terrain(x, y, terrain_types[TerrainTypes.shortgrass])
+            self.add_terrain(x, y, TerrainTypes.shortgrass)
             self.add_item(x, y, ItemTypes.grass)
 
     def missile_hit_mob(self, x, y):
@@ -509,38 +517,38 @@ class Game:
 
     def dig_dirt(self, x, y):
         target_sprite = self.map.get_sprite_at(x, y)
-        if target_sprite.terrain_type.name in [TerrainTypes.dirt, TerrainTypes.shortgrass, TerrainTypes.longgrass]:
+        if target_sprite.terrain_type in [TerrainTypes.dirt, TerrainTypes.shortgrass, TerrainTypes.longgrass]:
             self.killing(target_sprite)
-            self.add_terrain(x, y, terrain_types[TerrainTypes.well])
+            self.add_terrain(x, y, TerrainTypes.well)
             # Add effect
             self.map.add_effect_circle(x, y, WATERED_EFFECT_R, 'water')
 
     def build_hive(self, x, y):
         target_sprite = self.map.get_sprite_at(x, y)
-        if target_sprite.terrain_type.name in [TerrainTypes.shortgrass, TerrainTypes.longgrass]:
+        if target_sprite.terrain_type in [TerrainTypes.shortgrass, TerrainTypes.longgrass]:
             self.killing(target_sprite)
-            self.add_terrain(x, y, terrain_types[TerrainTypes.hive])
+            self.add_terrain(x, y, TerrainTypes.hive)
             for p in range(3):
                 col = x + int(uniform(-2, 2))
                 row = y + int(uniform(-2, 2))
                 mob_sprite = Mob(self, col, row)
-                mob_sprite.ImageComponent = BeeImageComponent(self, mob_sprite)
-                mob_sprite.ControlComponent = BumbleControlComponent(self, mob_sprite)
+                mob_sprite.imageComponent = BeeImageComponent(self, mob_sprite)
+                mob_sprite.controlComponent = BumbleControlComponent(self, mob_sprite)
                 self.ordered_sprites.append(mob_sprite)
             # Add effect
             self.map.add_effect_circle(x, y, POLLINATE_EFFECT_R, 'pollinate')
 
     def fertilise(self, x, y):
         target_sprite = self.map.get_sprite_at(x, y)
-        if target_sprite.terrain_type.name in [TerrainTypes.dirt, TerrainTypes.shortgrass, TerrainTypes.longgrass]:
+        if target_sprite.terrain_type in [TerrainTypes.dirt, TerrainTypes.shortgrass, TerrainTypes.longgrass]:
             self.map.add_effect(x, y, 'fertile')
 
     def plant_tree(self, x, y):
         target_sprite = self.map.get_sprite_at(x, y)
-        if target_sprite.terrain_type.name in [TerrainTypes.dirt, TerrainTypes.shortgrass, TerrainTypes.longgrass]:
+        if target_sprite.terrain_type in [TerrainTypes.dirt, TerrainTypes.shortgrass, TerrainTypes.longgrass]:
             if 'fertile' in self.map.get_effects(x, y):
                 self.killing(target_sprite)
-                self.add_terrain(x, y, terrain_types[TerrainTypes.sapling])
+                self.add_terrain(x, y, TerrainTypes.sapling)
 
 
 
@@ -551,6 +559,71 @@ class Game:
         return self.player.add_inv(itemtype, count)
 
 
+    """ Write out:
+    map.sprites
+    map.effects
+    self.player
+    self.ordered_sprites (might have to reset sprite groups when loading)
+    local state: self.active_spell, timers etc"""
+
+    def savegame(self, savefile):
+        # savestate = (self.map.sprites, self.map.effects, self.player, self.ordered_sprites)
+
+        spritenum = len(self.ordered_sprites)
+        # Preparation
+        # Having player in the group causes issues so we kill (remove from groups)
+        self.player.kill()
+
+        for s in self.all_sprites:
+            s.game = None
+            s.image = None
+            s.iso_image = None
+
+        # Serialization
+        game_folder = path.dirname(__file__)
+        save_folder = path.join(game_folder, "save")
+
+        with open(path.join(save_folder, "test.pickle"), "wb") as outfile:
+            pickle.dump(self.map.sprites, outfile)
+        print("Written objects")
+
+        # Restoration
+        self.all_sprites.add(self.player)
+        for row in self.map.sprites:
+            for s in row:
+                s.game = self
+                s.image = terrains[s.terrain_type].img
+                s.iso_image = terrains[s.terrain_type].iso_images[s.anim_frame]
+        self.player.image = self.player_img
+        self.player.iso_image = self.iso_player_img
+
+    def loadgame(self, savefile):
+
+        # Preparation
+        self.ordered_sprites = []
+
+        # Deserialization
+        game_folder = path.dirname(__file__)
+        save_folder = path.join(game_folder, "save")
+        loaded_sprites = []
+
+
+        with open(path.join(save_folder, "test.pickle"), "rb") as infile:
+            # (self.map.sprites, self.map.effects, self.player, self.ordered_sprites) = pickle.load(infile)
+            loaded_sprites = pickle.load(infile)
+            self.map.sprites = loaded_sprites
+
+        # Restoration
+        for row in self.map.sprites:
+            for s in row:
+                s.game = self
+                s.image = terrains[s.terrain_type].img
+                s.iso_image = terrains[s.terrain_type].iso_images[s.anim_frame]
+                self.ordered_sprites.append(s)
+                self.all_sprites.add(s)
+
+
+        print("Reconstructed objects")
 
 
 # create the game object

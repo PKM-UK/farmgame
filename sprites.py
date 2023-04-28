@@ -12,11 +12,11 @@ from math import floor
 # TerrainTypes = Enum('TerrainTypes', ['dirt', 'shortgrass', 'longgrass', 'wall', 'well'])
 
 map_char_mapping = {
-    ".": terrain_types[TerrainTypes.dirt],
-    "g": terrain_types[TerrainTypes.shortgrass],
-    "t": terrain_types[TerrainTypes.tree],
-    "w": terrain_types[TerrainTypes.wall],
-    "W": terrain_types[TerrainTypes.well]
+    ".": TerrainTypes.dirt,
+    "g": TerrainTypes.shortgrass,
+    "t": TerrainTypes.tree,
+    "w": TerrainTypes.wall,
+    "W": TerrainTypes.well
 }
 
 
@@ -144,30 +144,30 @@ class Mob(pg.sprite.Sprite):
         self.health = MOB_HEALTH
 
         # Components
-        self.ControlComponent = None
-        self.ImageComponent = None
+        self.controlComponent = None
+        self.imageComponent = None
 
     def update(self, gamestate):
 
         # CONTROL
-        if self.ControlComponent is not None:
-            self.rot, self.vel = self.ControlComponent.get_control()
+        if self.controlComponent is not None:
+            self.rot, self.vel = self.controlComponent.get_control()
         else:
             self.rot = 0
             self.vel = vec(0,0)
 
         # POSITION
         # self.image = pg.transform.rotate(self.game.mob_img, self.rot)
-        self.image = self.ImageComponent.get_image(self.rot) if self.ImageComponent else self.game.mob_img
+        self.image = self.imageComponent.get_image(self.rot) if self.imageComponent else self.game.mob_img
         self.iso_image = self.image
 
         self.rect = self.image.get_rect()
         self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
         self.hit_rect.left = self.pos.x
-        if self.ControlComponent is None or not (hasattr(self.ControlComponent, 'flying')):
+        if self.controlComponent is None or not (hasattr(self.controlComponent, 'flying')):
             collide_with_walls(self, self.game.walls, 'x')
         self.hit_rect.top = self.pos.y
-        if self.ControlComponent is None or not (hasattr(self.ControlComponent, 'flying')):
+        if self.controlComponent is None or not (hasattr(self.controlComponent, 'flying')):
             collide_with_walls(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
 
@@ -189,7 +189,7 @@ class Mob(pg.sprite.Sprite):
 
 class Wall(pg.sprite.Sprite):
     def __init__(self, game, tile_x, tile_y, terrain_type, anim_frame=0):
-        if len(terrain_type.iso_images) > 1:
+        if len(terrains[terrain_type].iso_images) > 1:
             self.groups = game.all_sprites, game.walls, game.animated
         else:
             self.groups = game.all_sprites, game.walls
@@ -198,12 +198,12 @@ class Wall(pg.sprite.Sprite):
         self.game = game
 
         self.terrain_type = terrain_type
-        self.is_obstacle = self.terrain_type.obstacle
+        self.is_obstacle = terrains[self.terrain_type].obstacle
         self.anim_frame = anim_frame
 
         self.pos = vec(tile_x, tile_y) * TILESIZE
-        self.image = self.terrain_type.img
-        self.iso_image = self.terrain_type.iso_images[self.anim_frame]
+        self.image = terrains[self.terrain_type].img
+        self.iso_image = terrains[self.terrain_type].iso_images[self.anim_frame]
         self.hit_rect = self.image.get_rect()
         self.hit_rect.topleft = self.pos
         self.rect = self.hit_rect
@@ -218,9 +218,9 @@ class Wall(pg.sprite.Sprite):
 
     def animate_tick(self):
         self.anim_frame = self.anim_frame + 1
-        if self.anim_frame >= len(self.terrain_type.iso_images):
+        if self.anim_frame >= len(terrains[self.terrain_type].iso_images):
             self.anim_frame = 0
-        self.iso_image = self.terrain_type.iso_images[self.anim_frame]
+        self.iso_image = terrains[self.terrain_type].iso_images[self.anim_frame]
 
 
 class Bullet(pg.sprite.Sprite):

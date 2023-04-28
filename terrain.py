@@ -23,7 +23,7 @@ class Terrain:
         # sample effect: {type: 'grass_grow', radius: '5', p: 0.05}
         self.effects = []
 
-terrain_types = {
+terrains = {
     TerrainTypes.dirt: Terrain(TerrainTypes.dirt, False, 'dirtTile.png', ['isodirtTile.png']),
     TerrainTypes.shortgrass: Terrain(TerrainTypes.shortgrass, False, 'grassTile.png', ['isoshortgrassTile.png']),
     TerrainTypes.longgrass: Terrain(TerrainTypes.longgrass, False, 'grassTile.png', ['isolonggrassTile.png']),

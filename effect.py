@@ -16,14 +16,14 @@ class WateredEffect(Effect):
         self.affected_types = [TerrainTypes.dirt, TerrainTypes.shortgrass]
 
     def do_thing(self, square, sprite):
-        if sprite.terrain_type.name == TerrainTypes.dirt:
+        if sprite.terrain_type == TerrainTypes.dirt:
             self.game.killing(sprite)
-            self.game.add_terrain(square[0], square[1], terrain_types[TerrainTypes.shortgrass])
-        elif sprite.terrain_type.name == TerrainTypes.shortgrass:
+            self.game.add_terrain(square[0], square[1], TerrainTypes.shortgrass)
+        elif sprite.terrain_type == TerrainTypes.shortgrass:
             # long grass grows slower than short grass
             if uniform(0.0, 1.0) < 0.3:
                 self.game.killing(sprite)
-                self.game.add_terrain(square[0], square[1], terrain_types[TerrainTypes.longgrass])
+                self.game.add_terrain(square[0], square[1], TerrainTypes.longgrass)
 
 
 class PollinateEffect(Effect):
@@ -33,7 +33,7 @@ class PollinateEffect(Effect):
 
     def do_thing(self, square, sprite):
         self.game.killing(sprite)
-        self.game.add_terrain(square[0], square[1], terrain_types[TerrainTypes.flowers])
+        self.game.add_terrain(square[0], square[1], TerrainTypes.flowers)
 
 
 class FertileEffect(Effect):
@@ -43,4 +43,4 @@ class FertileEffect(Effect):
 
     def do_thing(self, square, sprite):
         self.game.killing(sprite)
-        self.game.add_terrain(square[0], square[1], terrain_types[TerrainTypes.tree])
+        self.game.add_terrain(square[0], square[1], TerrainTypes.tree)
