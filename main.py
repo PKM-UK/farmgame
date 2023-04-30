@@ -11,6 +11,7 @@ from settings import *
 from sprites import *
 from imagecomponent import *
 from controlcomponent import *
+from componentfactory import comp
 from map import *
 from animator import *
 from terrain import *
@@ -140,13 +141,7 @@ class Game:
         for row, tiles in enumerate(self.map.data):
             for col, tile in enumerate(tiles):
                 if tile == 'z':
-                    mob_sprite = Mob(self, col, row)
-                    mob_sprite.imageComponent = GoatImageComponent(self, mob_sprite)
-                    mob_sprite.controlComponent = GrazerControlComponent(self, mob_sprite)
-                    self.ordered_sprites.append(mob_sprite)
-
-                    self.debug_goat = mob_sprite
-
+                    self.add_mob(col, row, 'GoatImageComponent', 'GrazerControlComponent')
                     tile = '.'   # Dirty hax to put dirt under mobs
                 elif tile == 'p':
                     self.player = Player(self, col, row)
@@ -157,10 +152,6 @@ class Game:
                 self.map.add_sprite(col, row, wall_sprite)
                 self.ordered_sprites.append(wall_sprite)
 
-        """mob_sprite = Mob(self, 3, 3)
-        mob_sprite.imageComponent = CatImageComponent(self, mob_sprite)
-        mob_sprite.controlComponent = PetControlComponent(self, mob_sprite, 0.3)
-        self.ordered_sprites.append(mob_sprite)"""
 
         # Now sort walls by Z
         self.sort_sprites()
@@ -236,7 +227,6 @@ class Game:
         now = pg.time.get_ticks()
         if now - self.last_effect_tick > self.effect_update_interval:
             self.last_effect_tick = now
-            print('doing fx')
             for effect_name in self.effects.keys():
                 effect = self.effects[effect_name]
                 e_squares = self.map.get_affected_squares(effect_name)
@@ -445,6 +435,14 @@ class Game:
         grass = Item(self, col, row, item_types[item_type])
         self.ordered_sprites.append(grass)
 
+    def add_mob(self, col, row, ic_type, cc_type):
+        mob_sprite = Mob(self, col, row)
+        mob_sprite.imageComponent = comp(ic_type, self, mob_sprite)
+        mob_sprite.controlComponent = comp(cc_type, self, mob_sprite)
+        self.all_sprites.add(mob_sprite)
+        self.mobs.add(mob_sprite)
+        self.ordered_sprites.append(mob_sprite)
+
     def sort_sprites(self):
         self.ordered_sprites.sort(key=lambda s: s.pos.x + s.pos.y + ((TILESIZE*2) if isinstance(s, Mob) or isinstance(s, Bullet) else 0))
 
@@ -531,12 +529,10 @@ class Game:
             self.killing(target_sprite)
             self.add_terrain(x, y, TerrainTypes.hive)
             for p in range(3):
-                col = x + int(uniform(-2, 2))
-                row = y + int(uniform(-2, 2))
-                mob_sprite = Mob(self, col, row)
-                mob_sprite.imageComponent = BeeImageComponent(self, mob_sprite)
-                mob_sprite.controlComponent = BumbleControlComponent(self, mob_sprite)
-                self.ordered_sprites.append(mob_sprite)
+                col = x + int(uniform(0, 4) - 2)
+                row = y + int(uniform(0, 4) - 2)
+                self.add_mob(col, row, 'BeeImageComponent', 'BumbleControlComponent')
+
             # Add effect
             self.map.add_effect_circle(x, y, POLLINATE_EFFECT_R, 'pollinate')
 
@@ -577,19 +573,42 @@ class Game:
         self.player.kill()
 
         # No images in any sprites
-        for s in self.all_sprites:
+        for s in self.walls:
             s.game = None
             s.image = None
             s.iso_image = None
 
         # No entity components with references to game
-        """self.debug_goat.imageComponent = None
-        self.debug_goat.controlComponent = None"""
 
         # Serialising Player is a faff, just do props
         # Not doing active_ability because having a callback to game requires game
         # TODO: replace self.active_ability with enum index into a dict so we can serialise it
         player_info = (self.player.pos, self.player.vel, self.player.rot, self.player.inventory, self.player.max_mp )
+
+        # Wall info for each wall
+        ts_infos = []
+        for s in self.walls:
+            tinfo = {}
+            tinfo['type'] = s.terrain_type
+            tinfo['tile_x'] = s.tile_x
+            tinfo['tile_y'] = s.tile_y
+            ts_infos.append(tinfo)
+
+        # Mob info struct for each mob
+        mobs_infos = []
+        killed_mobs = []
+        for s in self.mobs:
+            mob_info = {}
+            mob_info['pos'] = s.pos
+            mob_info['vel'] = s.vel
+            mob_info['rot'] = s.rot
+            mob_info['health'] = s.health
+            mob_info['ic_type'] = type(s.imageComponent).__name__
+            mob_info['cc_type'] = type(s.controlComponent).__name__
+
+            mobs_infos.append(mob_info)
+            s.kill()
+            killed_mobs.append(s)
 
 
         # Serialization
@@ -597,8 +616,9 @@ class Game:
         save_folder = path.join(game_folder, "save")
 
         with open(path.join(save_folder, "test.pickle"), "wb") as outfile:
-            pickle.dump((player_info, self.map.sprites), outfile)
-            # pickle.dump(self.debug_goat, outfile)
+            # pickle.dump((player_info, self.map.sprites, mobs_infos), outfile)
+            # ts_infos
+            pickle.dump((player_info, ts_infos, mobs_infos), outfile)
         print("Written objects")
 
         # Restoration
@@ -609,13 +629,12 @@ class Game:
                 s.image = terrains[s.terrain_type].img
                 s.iso_image = terrains[s.terrain_type].iso_images[s.anim_frame]
 
+        for s in killed_mobs:
+            self.all_sprites.add(s)
+            self.mobs.add(s)
+
         self.player.image = self.player_img
         self.player.iso_image = self.iso_player_img
-
-        """for s in self.mobs:
-            s.game = self
-        self.debug_goat.imageComponent = GoatImageComponent(self, self.debug_goat)
-        self.debug_goat.controlComponent = GrazerControlComponent(self, self.debug_goat)"""
 
     def loadgame(self, savefile):
 
@@ -631,27 +650,23 @@ class Game:
 
         with open(path.join(save_folder, "test.pickle"), "rb") as infile:
             # (self.map.sprites, self.map.effects, self.player, self.ordered_sprites) = pickle.load(infile)
-            (player_info, self.map.sprites) = pickle.load(infile)
+            (player_info, tinfos, mobs_infos) = pickle.load(infile)
             # self.debug_goat = pickle.load(infile)
 
         # Restoration
-        for row in self.map.sprites:
-            for s in row:
-                s.game = self
-                s.image = terrains[s.terrain_type].img
-                s.iso_image = terrains[s.terrain_type].iso_images[s.anim_frame]
-                self.ordered_sprites.append(s)
-                self.all_sprites.add(s)
+        for tinfo in tinfos:
+            col = tinfo['tile_x']
+            row = tinfo['tile_y']
+            wall_sprite = Wall(self, col, row, tinfo['type'])
+            self.map.add_sprite(col, row, wall_sprite)
+            self.ordered_sprites.append(wall_sprite)
+            self.all_sprites.add(wall_sprite)
 
         (self.player.pos, self.player.vel, self.player.rot, self.player.inventory, self.player.max_mp) = player_info
 
-        # for s in self.mobs:
-        """self.debug_goat.game = self
-        self.debug_goat.imageComponent = GoatImageComponent(self, self.debug_goat)
-        self.debug_goat.controlComponent = GrazerControlComponent(self, self.debug_goat)
-
-        self.mobs.add(self.debug_goat)"""
-
+        for info in mobs_infos:
+            (col, row) = tile_from_vec(info['pos'])
+            self.add_mob(col, row, info['ic_type'], info['cc_type'])
 
         print("Reconstructed objects")
 

@@ -82,13 +82,15 @@ class GrazerControlComponent(ControlComponent):
 
         if self.target_square is None:
             if now - self.tick > GOAT_ATTENTION_SPAN:
+                print('Looking for food')
                 self.tick = now
                 # Find a food square
                 # Ask the map for a list of sprites within our hunt radius
                 tiles = self.game.map.get_tile_circle(cx, cy, self.hunt_radius, 'terrain')
 
                 # Filter to only longgrass tiles and sort by Manhattan distance
-                target_tiles = list(filter(lambda tile: tile.terrain_type.name == TerrainTypes.longgrass, tiles))
+                target_tiles = list(filter(lambda tile: tile.terrain_type == TerrainTypes.longgrass, tiles))
+                print(f'Found {len(target_tiles)}')
                 target_tiles.sort(key=lambda tile: (tile.pos - self.mob.pos).magnitude())
 
                 if len(target_tiles) > 0:
@@ -158,7 +160,7 @@ class BumbleControlComponent(ControlComponent):
                 tiles = self.game.map.get_tile_circle(cx, cy, self.hunt_radius, 'terrain')
 
                 # Filter to only flowers and sort by furthest
-                target_tiles = list(filter(lambda tile: tile.terrain_type.name == TerrainTypes.flowers, tiles))
+                target_tiles = list(filter(lambda tile: tile.terrain_type == TerrainTypes.flowers, tiles))
                 if len(target_tiles) == 0: # TODO: or hive distance > vision distance
                     print("Going home because no flowers in range")
                     self.target_square = self.home_square
