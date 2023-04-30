@@ -567,6 +567,7 @@ class Game:
     def savegame(self, savefile):
         # savestate = (self.map.sprites, self.map.effects, self.player, self.ordered_sprites)
 
+        """Don't need to kill anythin as we're not serialising sprites
         spritenum = len(self.ordered_sprites)
         # Preparation
         # Having player in the group causes issues so we kill (remove from groups)
@@ -577,6 +578,7 @@ class Game:
             s.game = None
             s.image = None
             s.iso_image = None
+            """
 
         # No entity components with references to game
 
@@ -607,8 +609,8 @@ class Game:
             mob_info['cc_type'] = type(s.controlComponent).__name__
 
             mobs_infos.append(mob_info)
-            s.kill()
-            killed_mobs.append(s)
+            #s.kill()
+            #killed_mobs.append(s)
 
 
         # Serialization
@@ -622,7 +624,7 @@ class Game:
         print("Written objects")
 
         # Restoration
-        self.all_sprites.add(self.player)
+        """self.all_sprites.add(self.player)
         for row in self.map.sprites:
             for s in row:
                 s.game = self
@@ -634,7 +636,7 @@ class Game:
             self.mobs.add(s)
 
         self.player.image = self.player_img
-        self.player.iso_image = self.iso_player_img
+        self.player.iso_image = self.iso_player_img"""
 
     def loadgame(self, savefile):
 
@@ -659,6 +661,7 @@ class Game:
             row = tinfo['tile_y']
             wall_sprite = Wall(self, col, row, tinfo['type'])
             self.map.add_sprite(col, row, wall_sprite)
+            wall_sprite.change_mode(self.gamestate)
             self.ordered_sprites.append(wall_sprite)
             self.all_sprites.add(wall_sprite)
 
