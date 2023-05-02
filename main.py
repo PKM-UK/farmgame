@@ -641,6 +641,8 @@ class Game:
     def loadgame(self, savefile):
 
         # Preparation: nuke and repave
+        for s in self.ordered_sprites:
+            s.kill()
         self.ordered_sprites = []
 
         """self.debug_goat.kill()
