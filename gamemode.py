@@ -4,6 +4,8 @@
                        'compost': (self.fertilise, 1),
                        'sapling': (self.plant_tree, 2)}"""
 
+from terrain import TerrainTypes
+
 class GameMode():
     def __init__(self, game):
         self.unlocked_spells = []
@@ -25,12 +27,12 @@ class Story(GameMode):
     def __init__(self, game):
         super().__init__(game)
         self.progression_points = {
-            'well': (self.tengrasstiles, lambda a: self.unlocked('well')),
-            'goat': (self.tenlonggrasstiles, lambda a: self.unlocked('goat')),
-            'hive': (self.tengrassitems, lambda a: self.unlocked('hive')),
-            'sapling': (self.tenpoopitems, lambda a: self.unlocked('sapling')),
+            'well': (self.tengrasstiles, lambda: self.unlocked('well')),
+            'goat': (self.tenlonggrasstiles, lambda: self.unlocked('goat')),
+            'hive': (self.tengrassitems, lambda: self.unlocked('hive')),
+            'sapling': (self.tenpoopitems, lambda: self.unlocked('sapling')),
             'compost': (self.tenpoopitems, None),
-            'cat': (self.garden, lambda a: self.unlocked('cat'))
+            'cat': (self.garden, lambda: self.unlocked('cat'))
         }
 
     def spell_unlocked(self, spell):
@@ -61,7 +63,8 @@ class Story(GameMode):
         print(message)
 
     def tengrasstiles(self):
-        return False
+        grasstiles = sum(1 for t in self.game.walls if t.terrain_type == TerrainTypes.shortgrass)
+        return grasstiles > 3
 
     def tenlonggrasstiles(self):
         return False
