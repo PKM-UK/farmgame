@@ -18,6 +18,7 @@ from terrain import *
 from effect import *
 from task import *
 from dialog import *
+from gamemode import *
 from os import path
 from math import fmod, floor
 
@@ -172,7 +173,11 @@ class Game:
                        'well': (self.dig_dirt, 2),
                        'hive': (self.build_hive, 3),
                        'compost': (self.fertilise, 1),
-                       'sapling': (self.plant_tree, 2)}
+                       'sapling': (self.plant_tree, 2),
+                       'goat': (self.spawngoat, 1),
+                       'cat': (self.spawncat, 0.5)}
+
+        self.gamemode = Story(self)
 
         self.change_mode()
 
@@ -227,6 +232,7 @@ class Game:
         now = pg.time.get_ticks()
         if now - self.last_effect_tick > self.effect_update_interval:
             self.last_effect_tick = now
+            did_effect = False
             for effect_name in self.effects.keys():
                 effect = self.effects[effect_name]
                 e_squares = self.map.get_affected_squares(effect_name)
@@ -238,6 +244,10 @@ class Game:
                     rnd = uniform(0.0,1.0)
                     if self.map.sprites[y][x] and self.map.sprites[y][x].terrain_type in effect.affected_types and rnd < effect.probability:
                         effect.do_thing(square, self.map.sprites[y][x])
+                        self.did_effect = True
+
+            if did_effect:
+                self.gamemode.check_progression()
 
         if now - self.last_z_sort_tick > self.z_sort_interval:
             self.sort_sprites()
@@ -461,6 +471,7 @@ class Game:
 
                 if complete:
                     self.active_task = None
+                    self.gamemode.check_progression()
                 else:
                     self.task_progress = self.active_task.progress / self.active_task.duration
                     self.task_continuing = True
@@ -548,13 +559,21 @@ class Game:
                 self.killing(target_sprite)
                 self.add_terrain(x, y, TerrainTypes.sapling)
 
+    # Untested!
+    def spawngoat(self, x, y):
+        self.add_mob(x, y, 'GoatImageComponent', 'GrazerControlComponent')
 
+    def spawncat(self, x, y):
+        self.add_mob(x, y, 'CatImageComponent', 'PetControlComponent')
 
     def set_spell(self, name):
         self.player.set_spell(*self.spells[name])
 
     def add_inv(self, itemtype, count):
-        return self.player.add_inv(itemtype, count)
+        pickedup = self.player.add_inv(itemtype, count)
+        if pickedup:
+            self.gamemode.check_progression()
+        return pickedup
 
 
     """ Write out:
