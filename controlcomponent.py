@@ -82,7 +82,6 @@ class GrazerControlComponent(ControlComponent):
 
         if self.target_square is None:
             if now - self.tick > GOAT_ATTENTION_SPAN:
-                print('Looking for food')
                 self.tick = now
                 # Find a food square
                 # Ask the map for a list of sprites within our hunt radius
@@ -90,7 +89,6 @@ class GrazerControlComponent(ControlComponent):
 
                 # Filter to only longgrass tiles and sort by Manhattan distance
                 target_tiles = list(filter(lambda tile: tile.terrain_type == TerrainTypes.longgrass, tiles))
-                print(f'Found {len(target_tiles)}')
                 target_tiles.sort(key=lambda tile: (tile.pos - self.mob.pos).magnitude())
 
                 if len(target_tiles) > 0:
@@ -118,7 +116,6 @@ class GrazerControlComponent(ControlComponent):
 
             if self.saw_food_tick > 0 and now - self.saw_food_tick > GOAT_TENACITY:
                 # We've been hunting this food tile for ages, forget it
-                print('Forget about it')
                 self.target_square = None
                 self.rot = int(uniform(-179.0, 179.0))
                 self.vel = vec(self.speed * 0.5, 0).rotate(self.rot)
@@ -162,7 +159,6 @@ class BumbleControlComponent(ControlComponent):
                 # Filter to only flowers and sort by furthest
                 target_tiles = list(filter(lambda tile: tile.terrain_type == TerrainTypes.flowers, tiles))
                 if len(target_tiles) == 0: # TODO: or hive distance > vision distance
-                    print("Going home because no flowers in range")
                     self.target_square = self.home_square
                 else:
                     target_tiles.sort(key=lambda tile: (tile.pos - self.mob.pos).magnitude(), reverse=True)
@@ -171,14 +167,11 @@ class BumbleControlComponent(ControlComponent):
 
             target_vec = (self.target_square.pos - self.mob.pos)
             # Make sure target vec isn't (0,0)
-            if target_vec.magnitude() < 10:
+            while target_vec.magnitude() < 1:
                 target_vec = target_vec + vec(int(uniform(-10,10)), int(uniform(-10,10)))
-
-            print(f"Target is {tile_from_vec(target_vec)} from {tile_from_vec(self.mob.pos)}")
 
             self.vel = target_vec.normalize() * self.speed
             self.rot = 0 - self.vel.angle_to(vec(1, 0)) - (self.bumble_dir * 10)
-            print(f"So we're pointing to {self.rot}")
 
         # Every tick, adjust angle
         self.rot = self.rot + self.bumble_dir

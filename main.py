@@ -565,23 +565,6 @@ class Game:
     local state: self.active_spell, timers etc"""
 
     def savegame(self, savefile):
-        # savestate = (self.map.sprites, self.map.effects, self.player, self.ordered_sprites)
-
-        """Don't need to kill anythin as we're not serialising sprites
-        spritenum = len(self.ordered_sprites)
-        # Preparation
-        # Having player in the group causes issues so we kill (remove from groups)
-        self.player.kill()
-
-        # No images in any sprites
-        for s in self.walls:
-            s.game = None
-            s.image = None
-            s.iso_image = None
-            """
-
-        # No entity components with references to game
-
         # Serialising Player is a faff, just do props
         # Not doing active_ability because having a callback to game requires game
         # TODO: replace self.active_ability with enum index into a dict so we can serialise it
@@ -598,7 +581,6 @@ class Game:
 
         # Mob info struct for each mob
         mobs_infos = []
-        killed_mobs = []
         for s in self.mobs:
             mob_info = {}
             mob_info['pos'] = s.pos
@@ -609,9 +591,6 @@ class Game:
             mob_info['cc_type'] = type(s.controlComponent).__name__
 
             mobs_infos.append(mob_info)
-            #s.kill()
-            #killed_mobs.append(s)
-
 
         # Serialization
         game_folder = path.dirname(__file__)
@@ -620,23 +599,10 @@ class Game:
         with open(path.join(save_folder, "test.pickle"), "wb") as outfile:
             # pickle.dump((player_info, self.map.sprites, mobs_infos), outfile)
             # ts_infos
-            pickle.dump((player_info, ts_infos, mobs_infos), outfile)
-        print("Written objects")
+            pickle.dump((player_info, ts_infos, mobs_infos, self.map.effects), outfile)
+        print(f"Written {len(ts_infos)}, {len(mobs_infos)}, {len(self.map.effects)}x{len(self.map.effects[0])} objects")
 
-        # Restoration
-        """self.all_sprites.add(self.player)
-        for row in self.map.sprites:
-            for s in row:
-                s.game = self
-                s.image = terrains[s.terrain_type].img
-                s.iso_image = terrains[s.terrain_type].iso_images[s.anim_frame]
-
-        for s in killed_mobs:
-            self.all_sprites.add(s)
-            self.mobs.add(s)
-
-        self.player.image = self.player_img
-        self.player.iso_image = self.iso_player_img"""
+        print(f"Currently {len(self.ordered_sprites)}={len(self.all_sprites)} sprites ({len(self.walls)} terrain, {len(self.mobs)} mobs)")
 
     def loadgame(self, savefile):
 
@@ -645,16 +611,16 @@ class Game:
             s.kill()
         self.ordered_sprites = []
 
-        """self.debug_goat.kill()
-        self.debug_goat = None"""
-
         # Deserialization
         game_folder = path.dirname(__file__)
         save_folder = path.join(game_folder, "save")
 
         with open(path.join(save_folder, "test.pickle"), "rb") as infile:
             # (self.map.sprites, self.map.effects, self.player, self.ordered_sprites) = pickle.load(infile)
-            (player_info, tinfos, mobs_infos) = pickle.load(infile)
+            (player_info, tinfos, mobs_infos, self.map.effects) = pickle.load(infile)
+
+        print(f"Read {len(tinfos)}, {len(mobs_infos)}, {len(self.map.effects)}x{len(self.map.effects[0])} objects")
+
             # self.debug_goat = pickle.load(infile)
 
         # Restoration
@@ -674,6 +640,8 @@ class Game:
             self.add_mob(col, row, info['ic_type'], info['cc_type'])
 
         print("Reconstructed objects")
+        print(
+            f"Loaded {len(self.ordered_sprites)}={len(self.all_sprites)} sprites ({len(self.walls)} terrain, {len(self.mobs)} mobs)")
 
 
 # create the game object
