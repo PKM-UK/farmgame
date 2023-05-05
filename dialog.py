@@ -37,11 +37,17 @@ class Dialog():
         dialog_pos = (pos[0]-self.x, pos[1]-self.y)
         print(f"click in dlg at {dialog_pos}")
 
+        close_window = False
+
         for el in self.elements:
             if el.x < dialog_pos[0] < el.x + el.w:
                 if el.y < dialog_pos[1] < el.y + el.h:
                     close_window = el.mouse_click(pos)
                     break
+
+        # close on click outside
+        if dialog_pos[0] < 0 or dialog_pos[0] > self.w or dialog_pos[1] < 0 or dialog_pos[1] > self.h:
+            close_window = True
 
         if close_window:
             self.game.show_dialog(None)
@@ -50,6 +56,7 @@ class Button():
 
     border_col = (64, 255, 64)
     active_border_col = (64, 255, 255)
+    disabled_border_col = (96, 96, 96)
     text_col = (0, 0, 0)
     border_width = 4
 
@@ -59,9 +66,11 @@ class Button():
         self.w = w
         self.h = h
         self.surf = surf
+        self.active = True
 
         self.border_width = Button.border_width
         self.border_col = Button.border_col
+        self.disabled_border_col = Button.disabled_border_col
         self.active_border_col = Button.active_border_col
         self.text_col = Button.text_col
 
@@ -70,60 +79,78 @@ class Button():
 
         self.click_callback = None
 
-
-        # TODO: load button image from name in c'tor
-        # self.image =
-        self.image = pg.image.load(path.join(Dialog.img_folder, icon)).convert_alpha()
-        self.image = pg.transform.scale(self.image, (w - (self.border_width * 2), h - (self.border_width * 2)))
+        self.set_image(icon, w, h)
 
     def draw(self):
+
         button_rect = pg.Rect(self.x, self.y, self.w, self.h)
-        pg.draw.rect(self.surf, self.border_col, button_rect)
 
-        text = self.font.render(self.caption, True, self.text_col, self.border_col)
-        textRect = text.get_rect()
-        textRect.right = self.x + self.w
-        textRect.bottom = self.y + self.h
+        if self.active:
+            pg.draw.rect(self.surf, self.border_col, button_rect)
+            if self.image:
+                self.surf.blit(self.image, (self.x + self.border_width, self.y + self.border_width))
+        else:
+            pg.draw.rect(self.surf, self.disabled_border_col, button_rect)
 
-        self.surf.blit(self.image, (self.x + self.border_width, self.y + self.border_width))
-        self.surf.blit(text, textRect)
+        if self.caption != '':
+            text = self.font.render(self.caption, True, self.text_col, self.border_col)
+            textRect = text.get_rect()
+            textRect.right = self.x + self.w
+            textRect.bottom = self.y + self.h
+
+            self.surf.blit(text, textRect)
 
     def mouse_click(self, pos):
-        print('Button click!')
-        self.click_callback()
-        return True
+        if self.active and self.click_callback:
+            self.click_callback()
+        return self.active
 
     def set_caption(self, text):
         self.caption = text
+
+    def set_image(self, icon, w, h):
+        # TODO: don't load duplicate images etc.
+        if icon:
+            self.image = pg.image.load(path.join(Dialog.img_folder, icon)).convert_alpha()
+            self.image = pg.transform.scale(self.image, (w - (self.border_width * 2), h - (self.border_width * 2)))
+        else:
+            self.image = None
 
 
 class SpellDialog(Dialog):
     def __init__(self, x, y, w, h, screen, game):
         super().__init__(x, y, w, h, screen, game)
 
-        boltbutton = Button(30, 30, 90, 90, self.surf, 'bolticon.png')
-        wellbutton = Button(130, 30, 90, 90, self.surf, 'wellicon.png')
-        hivebutton = Button(230, 30, 90, 90, self.surf, 'hiveicon.png')
-        fertilisebutton = Button(30, 130, 90, 90, self.surf, 'poopItem.png')
-        planttreebutton = Button(130, 130, 90, 90, self.surf, 'saplingTile.png')
-        goatbutton = Button(30, 230, 90, 90, self.surf, 'lgoat.png')
-        catbutton = Button(130, 230, 90, 90, self.surf, 'lcat.png')
+        self.boltbutton = Button(30, 30, 90, 90, self.surf, 'bolticon.png')
+        self.wellbutton = Button(130, 30, 90, 90, self.surf, 'wellicon.png')
+        self.hivebutton = Button(230, 30, 90, 90, self.surf, 'hiveicon.png')
+        self.fertilisebutton = Button(30, 130, 90, 90, self.surf, 'poopItem.png')
+        self.planttreebutton = Button(130, 130, 90, 90, self.surf, 'saplingTile.png')
+        self.goatbutton = Button(30, 230, 90, 90, self.surf, 'lgoat.png')
+        self.catbutton = Button(130, 230, 90, 90, self.surf, 'lcat.png')
 
-        boltbutton.click_callback = (lambda: self.game.set_spell('bolt'))
-        wellbutton.click_callback = (lambda: self.game.set_spell('well'))
-        hivebutton.click_callback = (lambda: self.game.set_spell('hive'))
-        fertilisebutton.click_callback = (lambda: self.game.set_spell('compost'))
-        planttreebutton.click_callback = (lambda: self.game.set_spell('sapling'))
-        goatbutton.click_callback = (lambda: self.game.set_spell('spawngoat'))
-        catbutton.click_callback = (lambda: self.game.set_spell('spawncat'))
+        self.boltbutton.click_callback = (lambda: self.game.set_spell('bolt'))
+        self.wellbutton.click_callback = (lambda: self.game.set_spell('well'))
+        self.hivebutton.click_callback = (lambda: self.game.set_spell('hive'))
+        self.fertilisebutton.click_callback = (lambda: self.game.set_spell('compost'))
+        self.planttreebutton.click_callback = (lambda: self.game.set_spell('sapling'))
+        self.goatbutton.click_callback = (lambda: self.game.set_spell('spawngoat'))
+        self.catbutton.click_callback = (lambda: self.game.set_spell('spawncat'))
 
-        self.elements.append(boltbutton)
-        self.elements.append(wellbutton)
-        self.elements.append(hivebutton)
-        self.elements.append(fertilisebutton)
-        self.elements.append(planttreebutton)
-        self.elements.append(goatbutton)
-        self.elements.append(catbutton)
+        self.wellbutton.active = False
+        self.hivebutton.active = False
+        self.fertilisebutton.active = False
+        self.planttreebutton.active = False
+        self.goatbutton.active = False
+        self.catbutton.active = False
+
+        self.elements.append(self.boltbutton)
+        self.elements.append(self.wellbutton)
+        self.elements.append(self.hivebutton)
+        self.elements.append(self.fertilisebutton)
+        self.elements.append(self.planttreebutton)
+        self.elements.append(self.goatbutton)
+        self.elements.append(self.catbutton)
 
         self.update()
 
@@ -151,6 +178,17 @@ class InventoryDialog(Dialog):
             if new_button_x > (self.w - 120):
                 new_button_x = 30
                 new_button_y = new_button_y + 120
+
+class ProgressDialog(Dialog):
+    def __init__(self, x, y, w, h, screen, game, text):
+        super().__init__(x, y, w, h, screen, game)
+
+        textlabel = Button(20, 20, w-40, h-40, self.surf, None)
+        textlabel.caption = text
+        textlabel.font = pg.font.Font('freesansbold.ttf', 20)
+
+        self.elements.append(textlabel)
+        self.update()
 
 
 

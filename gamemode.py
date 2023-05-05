@@ -6,6 +6,7 @@
 
 from terrain import TerrainTypes
 from item import ItemTypes
+from dialog import ProgressDialog
 
 class GameMode():
     def __init__(self, game):
@@ -52,21 +53,30 @@ class Story(GameMode):
         message = ''
         if spell == 'well':
             message = 'I can dig a well to water more ground at once'
+            butt = self.game.dialogs['spells'].wellbutton
         elif spell == 'goat':
             message = 'This long grass is probably enough to feed a goat'
+            butt = self.game.dialogs['spells'].goatbutton
         elif spell == 'hive':
             message = 'I can weave a beehive from this grass, the flowers will like that'
+            butt = self.game.dialogs['spells'].hivebutton
         elif spell == 'sapling':
             message = 'This manure will fertilise the ground enough for trees'
+            butt = self.game.dialogs['spells'].fertilisebutton
+            self.game.dialogs['spells'].planttreebutton.active = True
         elif spell == 'cat':
             message = 'This place is looking great - all it needs is a cat!'
+            butt = self.game.dialogs['spells'].catbutton
 
         print(message)
+        self.game.dialogs['progress'] = ProgressDialog(200, 200, 600, 100, self.game.screen, self.game, message)
+        self.game.show_dialog('progress')
+        butt.active = True
 
     def tengrasstiles(self):
         grasstiles = sum(1 for t in self.game.walls if t.terrain_type == TerrainTypes.shortgrass)
         print(f"{grasstiles} grass tiles")
-        return grasstiles > 9
+        return grasstiles > 3
 
     def tenlonggrasstiles(self):
         grasstiles = sum(1 for t in self.game.walls if t.terrain_type == TerrainTypes.longgrass)
