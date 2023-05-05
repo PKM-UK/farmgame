@@ -166,7 +166,7 @@ class Game:
                         'fertile': FertileEffect(self, 'fertile', FERTILE_EFFECT_P)}
 
         # Set up UI now we have player etc.
-        self.dialogs = {'spells': SpellDialog(100, 50, 400, 300, self.screen, self),
+        self.dialogs = {'spells': SpellDialog(100, 50, 400, 360, self.screen, self),
                         'inventory': InventoryDialog(100, 50, 400, 300, self.screen, self)}
 
         self.spells = {'bolt': (self.magic_missile, 0.25),
@@ -174,8 +174,8 @@ class Game:
                        'hive': (self.build_hive, 3),
                        'compost': (self.fertilise, 1),
                        'sapling': (self.plant_tree, 2),
-                       'goat': (self.spawngoat, 1),
-                       'cat': (self.spawncat, 0.5)}
+                       'spawngoat': (self.spawngoat, 1),
+                       'spawncat': (self.spawncat, 0.5)}
 
         self.gamemode = Story(self)
 
@@ -244,7 +244,7 @@ class Game:
                     rnd = uniform(0.0,1.0)
                     if self.map.sprites[y][x] and self.map.sprites[y][x].terrain_type in effect.affected_types and rnd < effect.probability:
                         effect.do_thing(square, self.map.sprites[y][x])
-                        self.did_effect = True
+                        did_effect = True
 
             if did_effect:
                 self.gamemode.check_progression()
@@ -491,10 +491,8 @@ class Game:
     def missile_hit_ground(self, x, y):
         target_sprite = self.map.get_sprite_at(x, y)
         if target_sprite.terrain_type == TerrainTypes.dirt:
-            print(f"Plough dirt at {x}, {y}")
             self.map.add_effect(x, y, 'water')
         elif target_sprite.terrain_type in [TerrainTypes.longgrass, TerrainTypes.flowers]:
-            print(f"Cut grass at {x}, {y}")
             self.killing(target_sprite)
             self.add_terrain(x, y, TerrainTypes.shortgrass)
             self.add_item(x, y, ItemTypes.grass)
@@ -506,7 +504,6 @@ class Game:
         #hits = filter(lmobs, (lambda m: (m.pos - target_pos).magnitude() < TILESIZE))
 
         hits = [m for m in list(self.mobs) if (m.pos - target_pos).magnitude() < TILESIZE]
-        print(f"Hit {len(hits)} mobs")
         if len(hits) > 0:
             hits[0].health -= BULLET_DMG
             return True
@@ -522,7 +519,6 @@ class Game:
     def magic_missile(self, x, y):
         target_pos = vec((x + 0.5) * TILESIZE, (y + 0.5) * TILESIZE)
         target_vec_dir = (target_pos - self.player.pos).normalize()
-        print(f"Pew! {x}, {y}")
         missile = Bullet(self, vec(self.player.pos), target_vec_dir, (x, y))
         self.ordered_sprites.append(missile)
 

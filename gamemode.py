@@ -5,6 +5,7 @@
                        'sapling': (self.plant_tree, 2)}"""
 
 from terrain import TerrainTypes
+from item import ItemTypes
 
 class GameMode():
     def __init__(self, game):
@@ -64,22 +65,29 @@ class Story(GameMode):
 
     def tengrasstiles(self):
         grasstiles = sum(1 for t in self.game.walls if t.terrain_type == TerrainTypes.shortgrass)
-        return grasstiles > 3
+        print(f"{grasstiles} grass tiles")
+        return grasstiles > 9
 
     def tenlonggrasstiles(self):
-        return False
+        grasstiles = sum(1 for t in self.game.walls if t.terrain_type == TerrainTypes.longgrass)
+        return grasstiles > 9
 
     def tengrassitems(self):
-        return False
+        inv = self.game.player.inventory
+        grassinv = inv[ItemTypes.grass] if ItemTypes.grass in inv else 0
+        return grassinv > 10
 
     def tenpoopitems(self):
-        return False
-
-    def tenpoopitems(self):
-        return False
+        inv = self.game.player.inventory
+        poopinv = inv[ItemTypes.poop] if ItemTypes.poop in inv else 0
+        return poopinv > 10
 
     def garden(self):
-        return False
+        grasstiles = sum(1 for t in self.game.walls if t.terrain_type == TerrainTypes.longgrass)
+        flowertiles = sum(1 for t in self.game.walls if t.terrain_type == TerrainTypes.flowers)
+        treetiles = sum(1 for t in self.game.walls if t.terrain_type == TerrainTypes.tree)
+
+        return grasstiles > 10 and flowertiles > 5 and treetiles > 5
 
 
 

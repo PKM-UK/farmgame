@@ -12,7 +12,7 @@ def comp(type, *comp_args):
     elif type == 'BumbleControlComponent':
         return BumbleControlComponent(*comp_args)
     elif type == 'PetControlComponent':
-        return PetControlComponent(*comp_args)
+        return PetControlComponent(*comp_args, 0.3) # TODO: messy :(
     elif type == 'GoatImageComponent':
         return GoatImageComponent(*comp_args)
     elif type == 'BeeImageComponent':

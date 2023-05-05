@@ -104,20 +104,26 @@ class SpellDialog(Dialog):
         boltbutton = Button(30, 30, 90, 90, self.surf, 'bolticon.png')
         wellbutton = Button(130, 30, 90, 90, self.surf, 'wellicon.png')
         hivebutton = Button(230, 30, 90, 90, self.surf, 'hiveicon.png')
-        fertilisebutton = Button(330, 30, 90, 90, self.surf, 'poopItem.png')
-        planttreebutton = Button(30, 130, 90, 90, self.surf, 'saplingTile.png')
+        fertilisebutton = Button(30, 130, 90, 90, self.surf, 'poopItem.png')
+        planttreebutton = Button(130, 130, 90, 90, self.surf, 'saplingTile.png')
+        goatbutton = Button(30, 230, 90, 90, self.surf, 'lgoat.png')
+        catbutton = Button(130, 230, 90, 90, self.surf, 'lcat.png')
 
         boltbutton.click_callback = (lambda: self.game.set_spell('bolt'))
         wellbutton.click_callback = (lambda: self.game.set_spell('well'))
         hivebutton.click_callback = (lambda: self.game.set_spell('hive'))
         fertilisebutton.click_callback = (lambda: self.game.set_spell('compost'))
         planttreebutton.click_callback = (lambda: self.game.set_spell('sapling'))
+        goatbutton.click_callback = (lambda: self.game.set_spell('spawngoat'))
+        catbutton.click_callback = (lambda: self.game.set_spell('spawncat'))
 
         self.elements.append(boltbutton)
         self.elements.append(wellbutton)
         self.elements.append(hivebutton)
         self.elements.append(fertilisebutton)
         self.elements.append(planttreebutton)
+        self.elements.append(goatbutton)
+        self.elements.append(catbutton)
 
         self.update()
 
