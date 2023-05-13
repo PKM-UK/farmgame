@@ -44,6 +44,7 @@ def collide_with_walls(sprite, group, dirr):
 
 
 
+
 class Player(pg.sprite.Sprite):
     def __init__(self, game, tile_x, tile_y):
         self.groups = game.all_sprites
@@ -117,8 +118,11 @@ class Player(pg.sprite.Sprite):
         self.hit_rect.left = self.pos.x
         # print(f"Rect at {self.rect.topleft} is {self.rect.width} wide, hitrect {self.hit_rect.topleft} is {self.hit_rect.width}")
         collide_with_walls(self, self.game.walls, 'x')
+        self.pos.x = max(min(self.pos.x, self.game.map.pixelwidth - self.hit_rect.width), 0)
+
         self.hit_rect.top = self.pos.y
         collide_with_walls(self, self.game.walls, 'y')
+        self.pos.y = max(min(self.pos.y, self.game.map.pixelheight - self.hit_rect.height), 0)
 
     def add_inv(self, itemtype, count):
         self.inventory[itemtype] = self.inventory.get(itemtype, 0) + count

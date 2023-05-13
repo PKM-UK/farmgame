@@ -22,6 +22,7 @@ class Dialog():
         self.elements = []
 
     def update(self):
+        self.surf.fill(Dialog.background_col)
         for el in self.elements:
             el.draw()
 
@@ -189,6 +190,55 @@ class ProgressDialog(Dialog):
 
         self.elements.append(textlabel)
         self.update()
+
+class QuestsDialog(Dialog):
+    def __init__(self, x, y, w, h, screen, game):
+        super().__init__(x, y, w, h, screen, game)
+
+        self.active_quests = {}
+        self.complete_quests = {}
+
+    def addquest(self, name, text):
+        self.active_quests[name] = text
+        self.updatelists()
+        self.update()
+
+    def completequest(self, name):
+        if name in self.active_quests:
+            self.complete_quests[name] = self.active_quests[name]
+            self.active_quests.pop(name, None)
+            self.updatelists()
+            self.update()
+
+    def updatelists(self):
+        self.elements = []
+
+        y = 20
+        quest_font = pg.font.Font('freesansbold.ttf', 20)
+        complete_color = (0, 0, 0)
+        active_color = (255, 200, 25)
+
+        for cq in self.complete_quests.values():
+            textlabel = Button(20, y, self.w - 40, 25, self.surf, None)
+            textlabel.caption = cq
+            textlabel.font = quest_font
+            textlabel.text_col = complete_color
+
+            self.elements.append(textlabel)
+            y = y + 35
+
+        y = y + 10
+
+        for aq in self.active_quests.values():
+            textlabel = Button(20, y, self.w - 40, 25, self.surf, None)
+            textlabel.caption = aq
+            textlabel.font = quest_font
+            textlabel.text_col = active_color
+
+            self.elements.append(textlabel)
+            y = y + 35
+
+
 
 
 

@@ -78,6 +78,9 @@ class Game:
         self.dialogs = {}
         self.spells = {}
 
+        self.hx = 0
+        self.hy = 0
+
     def show_dialog(self, name):
         if name is not None and self.active_dialog != self.dialogs[name]:
             self.dialogs[name].update()
@@ -167,7 +170,8 @@ class Game:
 
         # Set up UI now we have player etc.
         self.dialogs = {'spells': SpellDialog(100, 50, 400, 360, self.screen, self),
-                        'inventory': InventoryDialog(100, 50, 400, 300, self.screen, self)}
+                        'inventory': InventoryDialog(100, 50, 400, 300, self.screen, self),
+                        'quests': QuestsDialog(100, 50, 400, 300, self.screen, self)}
 
         self.spells = {'bolt': (self.magic_missile, 0.25),
                        'well': (self.dig_dirt, 2),
@@ -366,20 +370,24 @@ class Game:
 
         # self.draw_grid()
 
+        screen_window_rect = pg.Rect(0, 0, WIDTH, HEIGHT)
         for sprite in self.ordered_sprites:
-            if isinstance(sprite, Mob):
-                sprite.draw_health()
 
-            self.screen.blit(sprite.iso_image if self.gamestate["iso_mode"] else sprite.image, self.camera.apply(sprite))
+            sprite_screen_pos = self.camera.apply(sprite)
+            if pg.Rect.colliderect(sprite_screen_pos, screen_window_rect):
 
+                if isinstance(sprite, Mob):
+                    sprite.draw_health()
+
+                self.screen.blit(sprite.iso_image if self.gamestate["iso_mode"] else sprite.image, self.camera.apply(sprite))
+
+        self.screen.blit(self.player.iso_image if self.gamestate["iso_mode"] else self.player.image, self.camera.apply(self.player))
 
         if self.gamestate.get("debug_draw"):
             for sprite in self.ordered_sprites:
                 self.draw_pos_cross(sprite.rect.topleft)
                 self.draw_pos_plus((sprite.pos))
                 pg.draw.rect(self.screen, BLUE, self.camera.apply(sprite), 1)
-
-        self.screen.blit(self.player.iso_image if self.gamestate["iso_mode"] else self.player.image, self.camera.apply(self.player))
 
         self.draw_game_ui()
 
@@ -388,6 +396,10 @@ class Game:
         pg.display.flip()
 
     def can_do_task(self):
+        if self.player.active_ability == self.build_hive and self.player.inventory[ItemTypes.grass] < 10:
+            return False
+        # TODO: other logic for correct hover type
+
         cursor_distance = (self.player.pos.x // TILESIZE - self.hx) ** 2 + (
                     self.player.pos.y // TILESIZE - self.hy) ** 2
         return cursor_distance <= PLAYER_INITIAL_REACH**2
@@ -410,6 +422,8 @@ class Game:
                     self.show_dialog('spells')
                 elif event.key == pg.K_e:
                     self.show_dialog('inventory')
+                elif event.key == pg.K_q:
+                    self.show_dialog('quests')
                 elif event.key == pg.K_i:
                     self.change_mode()
                 elif event.key == pg.K_d:
@@ -532,7 +546,8 @@ class Game:
 
     def build_hive(self, x, y):
         target_sprite = self.map.get_sprite_at(x, y)
-        if target_sprite.terrain_type in [TerrainTypes.shortgrass, TerrainTypes.longgrass]:
+        if target_sprite.terrain_type in [TerrainTypes.shortgrass, TerrainTypes.longgrass] and self.player.inventory[ItemTypes.grass] >= 10:
+            self.player.add_inv(ItemTypes.grass, -10)
             self.killing(target_sprite)
             self.add_terrain(x, y, TerrainTypes.hive)
             for p in range(3):

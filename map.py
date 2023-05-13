@@ -135,6 +135,7 @@ class Camera:
         return ht
 
     def update(self, target):
-        x = max(min(-target.rect.centerx + int(WIDTH / 2), 0), WIDTH - self.width)
-        y = max(min(-target.rect.centery + int(HEIGHT / 2), 0), HEIGHT - self.height)
+        # x = max(min(-target.rect.x + int(WIDTH / 2), 0), WIDTH - self.width)
+        x = max(min(-target.rect.x + int(WIDTH / 2) - target.rect.width, 0), (WIDTH // 2) - self.width)
+        y = max(min(-target.rect.y + int(HEIGHT / 2), 0), (HEIGHT // 2) - self.height)
         self.viewport = pg.Rect(x, y, self.width, self.height)
