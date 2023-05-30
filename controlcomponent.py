@@ -128,7 +128,7 @@ class GrazerControlComponent(ControlComponent):
                     self.saw_food_tick = -1
             else:
                 self.vel = target_vec.normalize() * self.speed
-                self.rot = self.vel.angle_to(vec(1, 0))
+                self.rot = vec(1, 0).angle_to(self.vel)
 
             if self.saw_food_tick > 0 and now - self.saw_food_tick > GOAT_TENACITY:
                 # We've been hunting this food tile for ages, forget it
