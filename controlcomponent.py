@@ -16,6 +16,22 @@ class ControlComponent:
     def get_control(self):
         pass
 
+class ClockCC(ControlComponent):
+    def __init__(self, game, mob):
+        super().__init__(game, mob)
+        self.rot = 0
+        self.vel = vec(0, 0)
+
+    def get_control(self):
+        now = pg.time.get_ticks()
+        if now > self.tick + 600:
+            self.tick = now
+            self.rot = self.rot + 10
+            if self.rot > 180:
+                self.rot = self.rot - 360
+            self.vel = vec(40, 0).rotate(self.rot)
+            print(f"Moving at {self.rot}")
+        # return self.rot, self.vel
 
 class HunterControlComponent(ControlComponent):
     def __init__(self, game, mob):

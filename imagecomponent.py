@@ -38,7 +38,7 @@ class GoatImageComponent(ImageComponent):
             GoatImageComponent.right_goat_img = pg.transform.scale(GoatImageComponent.right_goat_img, (TILESIZE, TILESIZE))
 
     def get_image(self, heading):
-        if -45 < heading < 135:
+        if -135 < heading < 45:
             return GoatImageComponent.right_goat_img
         else:
             return GoatImageComponent.left_goat_img

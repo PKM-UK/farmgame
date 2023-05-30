@@ -19,3 +19,7 @@ def comp(type, *comp_args):
         return BeeImageComponent(*comp_args)
     elif type == 'CatImageComponent':
         return CatImageComponent(*comp_args)
+    elif type == 'ClockCC':
+        return ClockCC(*comp_args)
+    else:
+        raise NotImplementedError

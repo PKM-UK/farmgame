@@ -155,7 +155,11 @@ class Mob(pg.sprite.Sprite):
 
         # CONTROL
         if self.controlComponent is not None:
-            self.rot, self.vel = self.controlComponent.get_control()
+            try:
+                self.rot, self.vel = self.controlComponent.get_control()
+            except:
+                print("Nothing returned from control component")
+                raise TypeError
         else:
             self.rot = 0
             self.vel = vec(0,0)
