@@ -71,6 +71,8 @@ class Player(pg.sprite.Sprite):
 
         # Inventory: map item type id to count
         self.inventory = {}
+        for itype in ItemTypes:
+            self.inventory[itype] = 0
 
     def get_keys(self):
         self.vel = vec(0, 0)
@@ -128,6 +130,7 @@ class Player(pg.sprite.Sprite):
         self.inventory[itemtype] = self.inventory.get(itemtype, 0) + count
         print(f"Now have {self.inventory[itemtype]} items of type {itemtype}")
         return True  # yes we did pick it up - false for inventory limits or weight or whatever
+
 
 
 class Mob(pg.sprite.Sprite):

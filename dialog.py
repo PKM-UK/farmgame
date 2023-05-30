@@ -215,8 +215,8 @@ class QuestsDialog(Dialog):
 
         y = 20
         quest_font = pg.font.Font('freesansbold.ttf', 20)
-        complete_color = (0, 0, 0)
-        active_color = (255, 200, 25)
+        complete_color = (96, 96, 96)
+        active_color = (0, 0, 0)
 
         for cq in self.complete_quests.values():
             textlabel = Button(20, y, self.w - 40, 25, self.surf, None)

@@ -57,7 +57,7 @@ class BeeImageComponent(ImageComponent):
             BeeImageComponent.right_bee_img = pg.transform.scale(BeeImageComponent.right_bee_img, (30, 30))
 
     def get_image(self, heading):
-        if -45 < heading < 135:
+        if -135 < heading < 45:
             return BeeImageComponent.right_bee_img
         else:
             return BeeImageComponent.left_bee_img
@@ -76,7 +76,7 @@ class CatImageComponent(ImageComponent):
             CatImageComponent.right_cat_img = pg.transform.scale(CatImageComponent.right_cat_img, (30, 30))
 
     def get_image(self, heading):
-        if -45 < heading < 135:
+        if -135 < heading < 45:
             return CatImageComponent.right_cat_img
         else:
             return CatImageComponent.left_cat_img

@@ -181,7 +181,7 @@ class Game:
                        'spawngoat': (self.spawngoat, 1),
                        'spawncat': (self.spawncat, 0.5)}
 
-        self.gamemode = Creative(self)
+        self.gamemode = Story(self)
 
         self.change_mode()
 
