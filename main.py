@@ -123,6 +123,12 @@ class Game:
             # self.terrain_images[tname] = img
             item_types[ikey].image = image
 
+        # Misc images
+        self.poop_overlay_image = pg.image.load(path.join(self.img_folder, "poopOverlay.png")).convert_alpha()
+        self.poop_overlay_image = pg.transform.scale(self.poop_overlay_image, (TILESIZE * 2, floor(
+            (self.poop_overlay_image.get_rect().height / self.poop_overlay_image.get_rect().width) * TILESIZE * 2)))
+
+
         self.bullet_img = pg.image.load(path.join(self.img_folder, BULLET_IMG)).convert_alpha()
         self.iso_bullet_img = pg.image.load(path.join(self.img_folder, ISO_BULLET_IMG)).convert_alpha()
 
@@ -381,6 +387,13 @@ class Game:
                     sprite.draw_health()
 
                 self.screen.blit(sprite.iso_image if self.gamestate["iso_mode"] else sprite.image, self.camera.apply(sprite))
+
+                if isinstance(sprite, Wall):
+                    tile_fx = self.map.get_effects(sprite.tile_x, sprite.tile_y)
+                    ttype = sprite.terrain_type
+                    if tile_fx and ((ttype == TerrainTypes.dirt and 'water' in tile_fx) or \
+                                    (ttype in [TerrainTypes.shortgrass, TerrainTypes.longgrass] and 'fertile' in tile_fx)):
+                        self.screen.blit(self.poop_overlay_image, self.camera.apply(sprite))
 
         self.screen.blit(self.player.iso_image if self.gamestate["iso_mode"] else self.player.image, self.camera.apply(self.player))
 
