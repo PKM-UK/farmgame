@@ -9,3 +9,9 @@ statlog.py
 # Save files
 *.pickle
 
+# Executable dist
+build/
+dist/
+main
+main.spec
+
