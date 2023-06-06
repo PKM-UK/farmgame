@@ -40,11 +40,11 @@ class HunterControlComponent(ControlComponent):
     def get_control(self):
         # CONTROL
         aim_vec = self.game.player.pos - self.mob.pos
-        rot = aim_vec.angle_to(vec(1, 0))
+        rot = vec(1, 0).angle_to(aim_vec)
 
         # PHYSICS
         vel = self.mob.vel
-        acc = vec(MOB_SPEED, 0).rotate(-rot)
+        acc = vec(MOB_SPEED, 0).rotate(rot)
         vel *= 0.98
         vel += acc * self.game.dt
 

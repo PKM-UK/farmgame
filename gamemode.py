@@ -52,8 +52,8 @@ class Story(GameMode):
         # Starter quest
         self.game.dialogs['quests'].addquest('bolt', 'Dig some ground to let grass grow')
 
-        self.game.dialogs['progress'] = ProgressDialog(200, 200, 600, 100, self.game.screen, self.game, 'I should grow some plants...')
-        self.game.show_dialog('progress')
+        # self.game.dialogs['progress'] = ProgressDialog(200, 200, 600, 100, self.game.screen, self.game, 'I should grow some plants...')
+        self.game.show_dialog('menu')
 
     def spell_unlocked(self, spell):
         return spell in self.unlocked_spells

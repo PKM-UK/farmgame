@@ -74,6 +74,7 @@ class Button():
         self.disabled_border_col = Button.disabled_border_col
         self.active_border_col = Button.active_border_col
         self.text_col = Button.text_col
+        self.left_align = False
 
         self.caption = ''
         self.font = pg.font.Font('freesansbold.ttf', 32)
@@ -96,7 +97,12 @@ class Button():
         if self.caption != '':
             text = self.font.render(self.caption, True, self.text_col, self.border_col)
             textRect = text.get_rect()
-            textRect.right = self.x + self.w
+
+            if self.left_align:
+                textRect.left = self.x
+            else:
+                textRect.right = self.x + self.w
+
             textRect.bottom = self.y + self.h
 
             self.surf.blit(text, textRect)
@@ -238,7 +244,31 @@ class QuestsDialog(Dialog):
             self.elements.append(textlabel)
             y = y + 35
 
+class MenuDialog(Dialog):
 
+    def __init__(self, x, y, w, h, screen, game):
+        super().__init__(x, y, w, h, screen, game)
 
+        instructions = [
+            "Arrow keys: move",
+            "Space: cast spell",
+            "Tab: spells dialog",
+            "Esc: help dialog",
+            "Q: view quests",
+            "E: view inventory",
+            "S: save game",
+            "L: load game"
+        ]
 
+        font = pg.font.Font('freesansbold.ttf', 20)
+        iy = 10
 
+        for instruction in instructions:
+            textlabel = Button(20, iy, self.w - 40, 25, self.surf, None)
+            textlabel.caption = instruction
+            textlabel.font = font
+            textlabel.text_col = (0, 0, 0)
+            textlabel.left_align = True
+
+            self.elements.append(textlabel)
+            iy = iy + 35

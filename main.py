@@ -171,7 +171,8 @@ class Game:
         # Set up UI now we have player etc.
         self.dialogs = {'spells': SpellDialog(100, 50, 400, 360, self.screen, self),
                         'inventory': InventoryDialog(100, 50, 400, 300, self.screen, self),
-                        'quests': QuestsDialog(100, 50, 400, 300, self.screen, self)}
+                        'quests': QuestsDialog(100, 50, 400, 300, self.screen, self),
+                        'menu': MenuDialog(100, 50, 400, 300, self.screen, self)}
 
         self.spells = {'bolt': (self.magic_missile, 0.25),
                        'well': (self.dig_dirt, 2),
@@ -417,7 +418,7 @@ class Game:
                 self.quit()
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
-                    self.quit()
+                    self.show_dialog('menu')
                 elif event.key == pg.K_TAB:
                     self.show_dialog('spells')
                 elif event.key == pg.K_e:
